@@ -1,0 +1,6 @@
+@Articler.SiloHost_HostAddress = http://localhost:5214
+
+GET {{Articler.SiloHost_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
