@@ -107,34 +107,6 @@ static void ConfigureServices(IServiceCollection services)
     });
 
     services.AddTransient<IVectorStorageService, VectorStorageService>();
-
-    /*
-    services.AddSingleton<OpenAIClient>(sp =>
-    {
-        var settings = sp.GetRequiredService<IOptions<OpenAIClientSettings>>().Value;
-
-        var credential = new ApiKeyCredential(settings.ApiKey);
-        var options = new OpenAIClientOptions
-        {
-            Endpoint = new Uri(settings.BaseUrl)
-        };
-
-        var client = new OpenAIClient(credential, options);
-        return client;
-    });
-    */
-
-    /*
-    services.AddScoped<IEmbeddingGenerator<string, Embedding<float[]>>>(sp =>
-    {
-        var openAiClient = sp.GetRequiredService<OpenAIClient>();
-        var settings = sp.GetRequiredService<IOptions<OpenAiSettings>>().Value;
-
-        return (IEmbeddingGenerator<string, Embedding<float[]>>)openAiClient
-            .GetEmbeddingClient(settings.EmbeddingModel)
-            .AsIEmbeddingGenerator();
-    });
-    */
 }
 
 static void ConfigureHostedServices(IServiceCollection services)

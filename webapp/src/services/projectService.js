@@ -8,9 +8,6 @@ export default function useProjectService() {
     const UPDATE_PROJECT_ACTION = "Project/UpdateProject"
     const DELETE_PROJECT_ACTION = "Project/DeleteProject"
 
-    const GET_PROJECT_TEXT_ACTION = "Project/GetProjectText"
-    const UPDATE_PROJECT_TEXT_ACTION = "Project/UpdateProjectText"
-
     const router = useRouter()
 
     const createProject = async (title, description) => {
@@ -89,52 +86,6 @@ export default function useProjectService() {
         }
     }
 
-    const getProjectText = async (projectId) => {
-        console.log('ProjectService::getProjectText: Start get project text. ProjectId: ', projectId)
-
-        try {
-            const params = {    
-                projectId: projectId
-            }
-
-            const response = await api.get(GET_PROJECT_TEXT_ACTION, { params: params })
-            if (response.status === 200) {
-                console.log('ProjectService::getProjectText: Successfully got project text')
-                return response.data
-            } else {
-                console.error('ProjectService::getProjectText: Error getting project. Status:', response.status)
-                throw new Error('ProjectService::getProjectText: Error getting project. Status:', response.status)
-            }
-        }
-        catch (error) {
-            console.error('ProjectService::getProjectText: Exception: ', error)
-            throw error
-        }
-    }
-
-    const updateProjectText = async (projectId, text) => {
-        console.log('ProjectService::updateProjectText: Start update project text. ProjectId: ', projectId, ' TextLength: ', text?.length || 0)
-
-        try {
-            const response = await api.post(UPDATE_PROJECT_TEXT_ACTION, {
-                projectId: projectId,
-                text: text || ''
-            })
-            
-            if (response.status === 200) {
-                console.log('ProjectService::updateProjectText: Successfully updated project text')
-                return response.data
-            } else {
-                console.error('ProjectService::updateProjectText: Error updating project text. Status:', response.status)
-                throw new Error('ProjectService::updateProjectText: Error updating project text. Status:', response.status)
-            }
-        }
-        catch (error) {
-            console.error('ProjectService::updateProjectText: Exception: ', error)
-            throw error
-        }
-    }
-
     const deleteProject = async (projectId) => {
         console.log('ProjectService::deleteProject: Start delete project. ProjectId: ', projectId)
 
@@ -162,8 +113,6 @@ export default function useProjectService() {
         getUserProjects,
         getProject,
         updateProject,
-        getProjectText,
-        updateProjectText,
         deleteProject,
     }
 }

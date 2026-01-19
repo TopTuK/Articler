@@ -1,9 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, AlertTriangle, Trash2 } from 'lucide-vue-next'
 import { useToast } from 'vuestic-ui'
+import { storeToRefs } from 'pinia'
 import useProjectService from '@/services/projectService'
+import { useProjectStore } from '@/stores/projectStore'
 import { useI18n } from 'vue-i18n'
 import PostEditor from '@/components/common/PostEditor.vue'
 import ChatView from '@/components/logged/project/ChatView.vue'
@@ -14,6 +16,8 @@ const route = useRoute()
 const router = useRouter()
 const { init: showToast } = useToast()
 const projectService = useProjectService()
+const projectStore = useProjectStore()
+const { projectText } = storeToRefs(projectStore)
 const { t } = useI18n()
 
 const project = ref({
@@ -85,9 +89,7 @@ const loadProjectText = async () => {
   textError.value = null
 
   try {
-    const textData = await projectService.getProjectText(project.value.id)
-    // API returns an object with a 'text' property
-    postContent.value = textData.text || ''
+    await projectStore.getProjectText(project.value.id)
     console.log('ProjectView::loadProjectText: Project text loaded successfully')
   }
   catch (err) {
@@ -105,15 +107,21 @@ onMounted(() => {
   loadProject()
 })
 
-const postContent = ref('')
+// Use projectText from store directly via storeToRefs
+const postContent = computed({
+  get: () => projectText.value || '',
+  set: (value) => {
+    projectText.value = value
+  }
+})
 
 const handleSavePost = async () => {
-  if (!postContent.value.trim() || !project.value.id) return
+  if (!projectText.value?.trim() || !project.value.id) return
   
   isSavingText.value = true
   
   try {
-    await projectService.updateProjectText(project.value.id, postContent.value)
+    await projectStore.saveProjectText(project.value.id)
     console.log('ProjectView::handleSavePost: Project text saved successfully')
     showToast({
       message: t('project_view.toast.post_saved'),

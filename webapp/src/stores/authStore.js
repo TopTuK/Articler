@@ -6,28 +6,28 @@ import { useRouter } from 'vue-router'
 
 export const useAuthStore = defineStore('auth', () => {
     // State
-    const hasCookie = ref(Boolean(Cookies.get(COOKIE_NAME)));
+    const hasCookie = ref(Boolean(Cookies.get(COOKIE_NAME)))
 
     // Getters
     const isAuthenticated = computed(() => {
-        return hasCookie.value;
+        return hasCookie.value
     });
 
-    const router = useRouter();
+    const router = useRouter()
 
     watch(hasCookie, (newVal) => {
         // We need this because useAuth may be called before router is initialized
         if (!router) return; 
 
         if (router.currentRoute.value.meta.requireAuth && !newVal) {
-            router.push({ name: 'Login' });
+            router.push({ name: 'Login' })
         }
     });
 
     // Actions
     const logout = () => {
-        Cookies.remove(COOKIE_NAME);
-        hasCookie.value = false;
+        Cookies.remove(COOKIE_NAME)
+        hasCookie.value = false
     };
 
     return {

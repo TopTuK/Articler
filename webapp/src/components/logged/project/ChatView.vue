@@ -4,6 +4,7 @@ import { Send, RefreshCw } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vuestic-ui'
 import useChatService from '@/services/chatService'
+import { useProjectStore } from '@/stores/projectStore'
 
 const props = defineProps({
   projectId: {
@@ -14,7 +15,9 @@ const props = defineProps({
 
 const { t } = useI18n()
 const { init: showToast } = useToast()
+
 const chatService = useChatService()
+const projectStore = useProjectStore()
 
 const chatMessages = ref([])
 const chatInput = ref('')
@@ -79,6 +82,7 @@ const handleSendChat = async () => {
         content: response.response.content || '',
       }
       chatMessages.value.push(assistantMessage)
+      await projectStore.getProjectText(props.projectId)
     } else {
       // Error result - handle different error types
       let errorContent = t('project_view.chat.error_message') || 'Sorry, there was an error processing your message.'
