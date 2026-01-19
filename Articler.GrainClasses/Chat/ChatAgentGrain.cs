@@ -6,6 +6,7 @@ using Articler.GrainClasses.Project;
 using Articler.GrainInterfaces.Chat;
 using Articler.GrainInterfaces.Project;
 using Microsoft.Agents.AI;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -35,14 +36,15 @@ namespace Articler.GrainClasses.Chat
 
         private static readonly string WRITER_AGENT_INSTRUCTIONS = """
         You are a helpful text writer and editor for different posts.
-        Answer questions to chat OR  provide imoformation what you do and provide updated text of post.
+        Answer questions to chat OR  provide information what you do and provide updated text of post.
         If you don't know context of post ask user to provide it even if user asks a question.
         If user asks you to write text when text of the post should be in markdown format.
         Use SearchDocuments tool if the request relates to user documents or need specific context.
-        Answer user on his language.
-        Update text of post on a language it initiale created or on language of user request.
+        Update text of post on a language it initially created or on language of user message.
         
-        LANGUAGE RULE: You MUST ALWAYS answer in the SAME language as the user's question.
+        LANGUAGE RULE: 
+        - You MUST ALWAYS answer in the SAME language as the user's question.
+        - Text of post should be on a language it initially created or on language of user message.
         TOOL USAGE RULES:
         - Use available tools only MAX 10 times.
         RESPONSE RULES:
@@ -78,25 +80,25 @@ namespace Articler.GrainClasses.Chat
                 .CreateAIAgent(
                     instructions: DOCUMENT_AGENT_INSTRUCTIONS,
                     name: "DocumentSearcher",
-                    description: "Creates query string with keywords and searches information in users documents",
-                    tools: [AIFunctionFactory.Create(SearchDocumentAsync)]
+                    description: "Search information in user documenta",
+                    //tools: [AIFunctionFactory.Create(SearchDocumentAsync)]
+                    tools: []
                 );
 
             var chatAgentScheme = AIJsonUtilities.CreateJsonSchema(typeof(AIChatAgentResponseFormat));
             var chatOptions = new ChatOptions
             {
                 Instructions = WRITER_AGENT_INSTRUCTIONS,
-                Tools = [_documentAgent.AsAIFunction()],
-            };
-
-            chatOptions.ResponseFormat = settings.Name switch
-            {
-                OpenAIClientSettings.OpenAIOptions => ChatResponseFormat.ForJsonSchema(
-                    schema: chatAgentScheme,
-                    schemaName: "AgentReply",
-                    schemaDescription: "Schema contains assistant reply and text of the post (text can be empty)"
-                ),
-                _ => ChatResponseFormat.Json,
+                Tools = [AIFunctionFactory.Create(SearchDocumentAsync)],
+                ResponseFormat = settings.Name switch
+                {
+                    OpenAIClientSettings.OpenAIOptions => ChatResponseFormat.ForJsonSchema(
+                        schema: chatAgentScheme,
+                        schemaName: "AgentReply",
+                        schemaDescription: "Schema contains assistant reply and text of the post (text can be empty)"
+                    ),
+                    _ => ChatResponseFormat.Json,
+                },
             };
 
             _chatAgent = openAIClient
@@ -104,7 +106,7 @@ namespace Articler.GrainClasses.Chat
                 .CreateAIAgent(new ChatClientAgentOptions
                 {
                     Name = "WriterAgent",
-                    ChatOptions = chatOptions
+                    ChatOptions = chatOptions,
                 });
 
             _storageService = storageService;
@@ -113,19 +115,48 @@ namespace Articler.GrainClasses.Chat
         [Description("Search information in user documents")]
         public async Task<string> SearchDocumentAsync(
             [Description("User query string")] string userQuery,
-            [Description("Document name or empty string if need to search in all documents")] List<string> documents)
+            [Description("List of ids of user documents. Empty if need to search in all documents")] List<string> documentIds)
         {
             var grainId = this.GetPrimaryKey(out var userId);
             _logger.LogInformation("ChatAgentGrain::SearchDocumentAsync: start search information in user documents. " +
                 "GrainId={grainId} UserId={userId} UserQueryLength={queryLength} DocumentsCount={documentsCount}",
-                grainId, userId, userQuery.Length, documents.Count);
+                grainId, userId, userQuery.Length, documentIds.Count);
 
             var vectorQuery = await _documentAgent.RunAsync("Convert user query text to query string with keywords. You should return only query string for search" +
                 $"User query is \"{userQuery}\"");
-            var ragDocuments = await _storageService.SearchDocumentsAsync(vectorQuery.Text, userId!, grainId);
 
-            if (ragDocuments.Any())
+            if (string.IsNullOrWhiteSpace(vectorQuery.Text))
             {
+                _logger.LogWarning("ChatAgentGrain::SearchDocumentAsync: vectorized text is null or whitespace.");
+                return string.Empty;
+            }
+
+            _logger.LogInformation("ChatAgentGrain::SearchDocumentAsync: start RAG search. " +
+                "DocumentsCount={documentsCount}, SearchText={searchText}", documentIds.Count, vectorQuery.Text);
+
+            List<string> ragDocuments = [];
+            if (documentIds.Count > 0)
+            {
+                foreach (var documentId in documentIds)
+                {
+                    if (Guid.TryParse(documentId, out var docId))
+                    {
+                        var searchResult = await _storageService
+                            .SearchDocumentsAsync(vectorQuery.Text, userId!, grainId, documentId: docId);
+                        ragDocuments.AddRange(searchResult);
+                    }
+                }
+            }
+            else
+            {
+                ragDocuments.AddRange(await _storageService.SearchDocumentsAsync(vectorQuery.Text, userId!, grainId));
+            }
+
+            if (ragDocuments.Count != 0)
+            {
+                _logger.LogInformation("ChatAgentGrain::SearchDocumentAsync: summarazing rag documents. " +
+                    "RagDocumentsCount={ragDocumentsCount}", ragDocuments.Count);
+
                 var summaryDocument = await _documentAgent
                     .RunAsync("Summarize and generealize result of rag search in max 30 words" +
                         $"Text for processing is \"{string.Join('.', ragDocuments)}\"." +
@@ -217,8 +248,10 @@ namespace Articler.GrainClasses.Chat
                 if (_chatHistoryState.State.Messages.Count == 0)
                 {
                     promt = $"{_chatHistoryState.State.FirstMessage}." +
-                        message + "Context is next:"+
-                        $"* Current text of post=\"{projectText.Text}\"." +
+                        message + ".\\n Context is next:" +
+                        $"* ProjectId=\"{grainId}\"" +
+                        $"* UserId=\"{userId}\"" +
+                        $"* Current text of post=\"{projectText.Text}\".\\n" +
                         documentsPromt;
                 }
                 else
@@ -228,57 +261,41 @@ namespace Articler.GrainClasses.Chat
                         JsonSerializerOptions.Web);
                     thread = _chatAgent.DeserializeThread(jsonThread, JsonSerializerOptions.Web);
                     promt = $"{message}. Context is next:" +
-                        $"Current text of the post=\"{projectText.Text}\"." +
+                        $"* ProjectId=\"{grainId}\"" +
+                        $"* UserId=\"{userId}\"" +
+                        $"* Current text of the post=\"{projectText.Text}\".\\n" +
                         documentsPromt;
                 }
 
+                _logger.LogInformation("ChatAgentGrain::SendUserMessage: start agent conversation. " +
+                    "GrainId={grainId} UserId={userId} Promt=[{promt}]",
+                    grainId, userId, promt);
                 var result = await _chatAgent.RunAsync(promt, thread);
                 _logger.LogInformation("ChatAgentGrain::SendUserMessage: result text. " +
                     "GrainId={grainId} UserId={userId} AssistantText={assistantText}",
                     grainId, userId, result.Text);
 
-                var messages = thread.GetService<IList<Microsoft.Extensions.AI.ChatMessage>>();
-                if (messages != null)
-                {
-                    var msgs = messages
-                        .Select(m =>
-                        {
-                            var role = AppDomain.Models.Chat.ChatRole.Unknown;
-                            if (m.Role == Microsoft.Extensions.AI.ChatRole.Assistant)
-                            {
-                                role = AppDomain.Models.Chat.ChatRole.Assistant;
-                            }
-                            else if (m.Role == Microsoft.Extensions.AI.ChatRole.System)
-                            {
-                                role = AppDomain.Models.Chat.ChatRole.System;
-                            }
-                            else if (m.Role == Microsoft.Extensions.AI.ChatRole.User)
-                            {
-                                role = AppDomain.Models.Chat.ChatRole.User;
-                            }
-                            else if (m.Role == Microsoft.Extensions.AI.ChatRole.Tool)
-                            {
-                                role = AppDomain.Models.Chat.ChatRole.Tool;
-                            }
+                // Saving history of chat
+                var history = thread
+                    .Serialize(JsonSerializerOptions.Web)
+                    .GetRawText();
+                _chatHistoryState.State.MessageHistory = history;
 
-                            return ChatMessageFactory.CreateMessage(role, m.Text);
-                        })
-                        .ToList();
-
-                    _chatHistoryState.State.Messages = msgs;
-                    var history = thread
-                        .Serialize(JsonSerializerOptions.Web)
-                        .GetRawText();
-                    _chatHistoryState.State.MessageHistory = history;
-
-                    await _chatHistoryState.WriteStateAsync();
-                }
-
-                if(result.TryDeserialize<AIChatAgentResponseFormat>(out var agentResponse))
+                _chatHistoryState.State
+                    .Messages
+                    .Add(ChatMessageFactory.CreateUserMessage(message));
+                if (result.TryDeserialize<AIChatAgentResponseFormat>(out var agentResponse))
                 {
                     _logger.LogInformation("ChatAgentGrain::SendUserMessage: chat response. " +
                     "GrainId={grainId} UserId={userId} AssistantReply={assistantReply} TextLength={textLength}",
                         grainId, userId, agentResponse.AgentReply, agentResponse.PostText?.Length);
+
+                    _chatHistoryState.State
+                        .Messages
+                        .Add(ChatMessageFactory.CreateAssistantMessage(agentResponse.AgentReply ?? "I do nothing"));
+
+                    await _chatHistoryState.WriteStateAsync();
+
                     return ChatMessageFactory.CreateMessageResponse(
                         AppDomain.Models.Chat.ChatRole.Assistant,
                         agentResponse.AgentReply ?? string.Empty,
@@ -286,7 +303,15 @@ namespace Articler.GrainClasses.Chat
                 }
                 else
                 {
-                    _logger.LogWarning("ChatAgentGrain::SendUserMessage: can\'t deserialize response.");
+                    _logger.LogInformation("ChatAgentGrain::SendUserMessage: can\'t deserialize response. " +
+                        "GrainId={grainId} UserId={userId}", grainId, userId);
+
+                    _chatHistoryState.State
+                        .Messages
+                        .Add(ChatMessageFactory.CreateAssistantMessage(result.Text));
+
+                    await _chatHistoryState.WriteStateAsync();
+
                     return ChatMessageFactory.CreateMessageResponse(
                         role: AppDomain.Models.Chat.ChatRole.Assistant,
                         message: result.Text,

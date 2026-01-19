@@ -100,6 +100,10 @@ namespace Articler.AppDomain.Services.VectorStorage
                 _logger.LogInformation("VectorStorageService::StoreTextAsync: generated [{chunkCount}] chunks. " +
                     "UserId={userId}, ProjectId={projectId}", chunks.Count, userId, projectId);
 
+                if (_embeddingGenerator == null)
+                {
+                    throw new ArgumentException(" is NULL!!!");
+                }
                 // Generate embeddings for all chunks
                 var chunkEmbeddings = await _embeddingGenerator.GenerateAsync(chunks);
                 _logger.LogInformation("VectorStorageService::StoreTextAsync: generated {chunkEmbeddingsCount} embeddings chunks. " +
