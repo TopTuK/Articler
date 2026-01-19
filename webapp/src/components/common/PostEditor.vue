@@ -1,6 +1,8 @@
 <script setup>
-import { FileText, RefreshCw } from 'lucide-vue-next'
+import { ref } from 'vue'
+import { FileText, RefreshCw, Maximize2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import PostEditorModal from './PostEditorModal.vue'
 
 const props = defineProps({
   modelValue: {
@@ -25,6 +27,8 @@ const emit = defineEmits(['update:modelValue', 'save', 'refresh'])
 
 const { t } = useI18n()
 
+const showModal = ref(false)
+
 const handleSavePost = () => {
   if (!props.modelValue.trim()) return
   emit('save')
@@ -32,6 +36,20 @@ const handleSavePost = () => {
 
 const handleRefresh = () => {
   emit('refresh')
+}
+
+const handleOpenModal = () => {
+  showModal.value = true
+}
+
+const handleModalSave = (text) => {
+  emit('update:modelValue', text)
+  emit('save')
+  showModal.value = false
+}
+
+const handleModalClose = () => {
+  showModal.value = false
 }
 </script>
 
@@ -44,15 +62,26 @@ const handleRefresh = () => {
             <FileText :size="20" class="text-purple-400" />
             {{ t('project_view.sections.post_content') }}
           </h2>
-          <button
-            type="button"
-            @click="handleRefresh"
-            :disabled="isLoadingText"
-            class="inline-flex items-center justify-center gap-2 rounded-md border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 disabled:pointer-events-none disabled:opacity-50"
-            :title="t('project_view.actions.refresh_text')"
-          >
-            <RefreshCw :size="16" :class="{ 'animate-spin': isLoadingText }" />
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              @click="handleOpenModal"
+              :disabled="isLoadingText"
+              class="inline-flex items-center justify-center gap-2 rounded-md border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 disabled:pointer-events-none disabled:opacity-50"
+              :title="t('project_view.actions.open_in_modal')"
+            >
+              <Maximize2 :size="16" />
+            </button>
+            <button
+              type="button"
+              @click="handleRefresh"
+              :disabled="isLoadingText"
+              class="inline-flex items-center justify-center gap-2 rounded-md border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 disabled:pointer-events-none disabled:opacity-50"
+              :title="t('project_view.actions.refresh_text')"
+            >
+              <RefreshCw :size="16" :class="{ 'animate-spin': isLoadingText }" />
+            </button>
+          </div>
         </div>
       </div>
       <div class="p-4">
@@ -98,6 +127,15 @@ const handleRefresh = () => {
         </div>
       </div>
     </div>
+
+    <!-- Post Editor Modal -->
+    <PostEditorModal
+      v-model="showModal"
+      :post-text="modelValue"
+      :is-saving="isSaving"
+      @save="handleModalSave"
+      @close="handleModalClose"
+    />
   </div>
 </template>
 

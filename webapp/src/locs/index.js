@@ -85,8 +85,10 @@ const messages = {
           save_post: "Save Post",
           delete_project: "Delete Project",
           refresh_text: "Refresh text from server",
+          open_in_modal: "Open in editor",
           refresh: "Refresh",
           uploading: "Uploading...",
+          saving: "Saving...",
         },
         placeholders: {
           text_to_add_to_knowledge_base: "Enter text to add to your knowledge base...",
@@ -399,8 +401,10 @@ const messages = {
           save_post: "Сохранить",
           delete_project: "Удалить проект",
           refresh_text: "Обновить текст с сервера",
+          open_in_modal: "Открыть в редакторе",
           refresh: "Обновить",
           uploading: "Загрузка...",
+          saving: "Сохранение...",
         },
         placeholders: {
           text_to_add_to_knowledge_base: "Введите текст, чтобы добавить его в базу знаний...",
