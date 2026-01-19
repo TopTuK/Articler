@@ -80,16 +80,14 @@ namespace Articler.GrainClasses.Chat
                 .CreateAIAgent(
                     instructions: DOCUMENT_AGENT_INSTRUCTIONS,
                     name: "DocumentSearcher",
-                    description: "Search information in user documenta",
+                    description: "Search information in user documents"
                     //tools: [AIFunctionFactory.Create(SearchDocumentAsync)]
-                    tools: []
                 );
 
             var chatAgentScheme = AIJsonUtilities.CreateJsonSchema(typeof(AIChatAgentResponseFormat));
             var chatOptions = new ChatOptions
             {
                 Instructions = WRITER_AGENT_INSTRUCTIONS,
-                Tools = [AIFunctionFactory.Create(SearchDocumentAsync)],
                 ResponseFormat = settings.Name switch
                 {
                     OpenAIClientSettings.OpenAIOptions => ChatResponseFormat.ForJsonSchema(
@@ -98,7 +96,14 @@ namespace Articler.GrainClasses.Chat
                         schemaDescription: "Schema contains assistant reply and text of the post (text can be empty)"
                     ),
                     _ => ChatResponseFormat.Json,
-                },
+                }
+                //Tools = [AIFunctionFactory.Create(SearchDocumentAsync)]
+            };
+
+            var textSearchoptions = new TextSearchProviderOptions()
+            {
+                SearchTime = TextSearchProviderOptions.TextSearchBehavior.BeforeAIInvoke,
+                RecentMessageMemoryLimit = 0
             };
 
             _chatAgent = openAIClient
@@ -107,9 +112,48 @@ namespace Articler.GrainClasses.Chat
                 {
                     Name = "WriterAgent",
                     ChatOptions = chatOptions,
+                    AIContextProviderFactory = ctx =>
+                        new TextSearchProvider(
+                            DocumentsSearchAdapter, 
+                            ctx.SerializedState,
+                            ctx.JsonSerializerOptions,
+                            textSearchoptions)
                 });
 
             _storageService = storageService;
+        }
+
+        public async Task<IEnumerable<TextSearchProvider.TextSearchResult>> DocumentsSearchAdapter(
+            string query, CancellationToken cancellationToken)
+        {
+            var grainId = this.GetPrimaryKey(out var userId);
+            _logger.LogInformation("ChatAgentGrain::DocumentsSearchAdapter: start search information in user documents. " +
+                "GrainId={grainId} UserId={userId} QueryLength={queryLength}",
+                grainId, userId, query.Length);
+
+            var vectorQuery = await _documentAgent.RunAsync(
+                "Convert query text to query string with keywords. You should return only query string for search" +
+                $"Query=\"{query}\"");
+
+            if (string.IsNullOrWhiteSpace(vectorQuery.Text))
+            {
+                _logger.LogWarning("ChatAgentGrain::DocumentsSearchAdapter: vectorized text is null or whitespace.");
+                return [];
+            }
+
+
+            var documents = await _storageService.SearchDocumentsAsync(vectorQuery.Text, userId!, grainId);
+            var result = documents
+                .Select(doc => new TextSearchProvider.TextSearchResult()
+                {
+                    Text = doc
+                })
+                .ToList();
+
+            _logger.LogInformation("ChatAgentGrain::DocumentsSearchAdapter: return rag search result. " +
+                "GrainId={grainId} UserId={userId} ResultCount={resultCount}",
+                grainId, userId, result.Count);
+            return result;
         }
 
         [Description("Search information in user documents")]
