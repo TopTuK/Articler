@@ -1,4 +1,5 @@
 using Articler.AppDomain.Constants;
+using Articler.AppDomain.Services.Document;
 using Articler.AppDomain.Services.VectorStorage;
 using Articler.AppDomain.Settings;
 using Articler.SiloHost.Services;
@@ -9,9 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel.Connectors.Qdrant;
 using OpenAI;
-using Orleans.Hosting;
 using Qdrant.Client;
-using Qdrant.Client.Grpc;
 using Serilog;
 using System.ClientModel;
 
@@ -23,9 +22,6 @@ static void ConfigureOptions(IServiceCollection services, IConfiguration configu
 {
     // Configure QDrant settings
     services.Configure<QdrantSettings>(configuration.GetSection("Qdrant"));
-
-    // Configure OpenAIClientSettings
-    // services.Configure<OpenAIClientSettings>(configuration.GetSection("DeepSeek"));
 
     // configure openai clients
     services.Configure<OpenAIClientSettings>(
@@ -106,7 +102,9 @@ static void ConfigureServices(IServiceCollection services)
         return client;
     });
 
+    // Transient services
     services.AddTransient<IVectorStorageService, VectorStorageService>();
+    services.AddTransient<IPdfDocumentService, PdfDocumentService>();
 }
 
 static void ConfigureHostedServices(IServiceCollection services)
