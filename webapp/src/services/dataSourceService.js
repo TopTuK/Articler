@@ -4,6 +4,7 @@ export default function useDataSourceService() {
     const GET_DOCUMENTS_ACTION = "Document/GetProjectDocuments"
     const REMOVE_DOCUMENT_ACTION = "Document/RemoveDocument"
     const UPLOAD_TEXT_DATA_ACTION = "Document/AddTextDocument"
+    const UPLOAD_PDF_DATA_ACTION = "Document/AddPdfDocument"
 
     const getDocuments = async (projectId) => {
         console.log('DataSourceService::getDocuments: Start get documents. ProjectId: ', projectId)
@@ -61,6 +62,38 @@ export default function useDataSourceService() {
         }
     }
 
+    const addPdfDocument = async (projectId, title, pdfUrl) => {
+        console.log('DataSourceService::addPdfDocument: Start add pdf document. ProjectId: ', projectId, ' Title: ', title)
+
+        // Validate that title and text are not empty
+        if (!title || !title.trim()) {
+            throw new Error('DataSourceService::addPdfDocument: Title cannot be empty')
+        }
+        if (!pdfUrl || !pdfUrl.trim()) {
+            throw new Error('DataSourceService::addPdfDocument: Url cannot be empty')
+        }
+
+        try {
+            const response = await api.post(UPLOAD_PDF_DATA_ACTION, {
+                ProjectId: projectId,
+                Title: title.trim(),
+                PdfUrl: pdfUrl.trim()
+            })
+            
+            if (response.status === 200) {
+                console.log('DataSourceService::addPdfDocument: Successfully added pdf document')
+                return response.data
+            } else {
+                console.error('DataSourceService::addPdfDocument: Error adding pdf document. Status:', response.status)
+                throw new Error('DataSourceService::addPdfDocument: Error adding pdf document. Status:', response.status)
+            }
+        }
+        catch (error) {
+            console.error('DataSourceService::addPdfDocument: Exception: ', error)
+            throw error
+        }
+    }
+
     const removeDocument = async (projectId, documentId) => {
         console.log('DataSourceService::removeDocument: Start remove document. ProjectId: ', projectId, ' DocumentId: ', documentId)
 
@@ -94,7 +127,7 @@ export default function useDataSourceService() {
 
     return {
         getDocuments,
-        addTextDocument,
+        addTextDocument, addPdfDocument,
         removeDocument,
     }
 }

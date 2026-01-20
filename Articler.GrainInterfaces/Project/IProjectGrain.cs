@@ -21,5 +21,6 @@ namespace Articler.GrainInterfaces.Project
         Task<IEnumerable<IDocument>> GetDocuments();
         Task<IDocument?> RemoveDocument(Guid documentId);
         Task<IDocument> AddTextDocument(string title, string text);
+        Task<IDocument> AddPdfDocument(string title, string url);
     }
 }

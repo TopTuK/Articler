@@ -118,5 +118,38 @@ namespace Articler.WebApi.Controllers
                 return BadRequest("Exception raised");
             }
         }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> AddPdfDocument(PdfDataSourceDocumentRequest request)
+        {
+            var userId = HttpContext.Items["UserId"]!.ToString()!;
+            _logger.LogInformation("DocumentController::AddTextDocument: received text data source. " +
+                "UserId={userId}, Request=[{request}]", userId, request);
+
+            try
+            {
+                var document = await _documentService.AddProjectPdfDocumentAsync(userId, request.ProjectId,
+                    request.Title, request.PdfUrl);
+
+                if (document == null)
+                {
+                    _logger.LogError("DataSourceController::AddPdfDocument: can\'t add PDF document." +
+                        "UserId={userId}, Request=[{request}]", userId, request);
+                    return BadRequest();
+                }
+
+                _logger.LogInformation("DataSourceController::AddPdfDocument: sucessfully added PDF document. " +
+                    "UserId={userId}, ProjectId={projectId} DocumentId={documentId} DocumentTitle={documentTitle}",
+                    userId, request.ProjectId, document.Id, document.Title);
+                return new JsonResult(document);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("DataSourceController::AddPdfDocument: exception raised. " +
+                    "Message={exMsg}", ex.Message);
+                return BadRequest("Exception raised");
+            }
+        }
     }
 }

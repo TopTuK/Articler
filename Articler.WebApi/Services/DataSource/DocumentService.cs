@@ -1,13 +1,61 @@
 ﻿using Articler.AppDomain.Models.Documents;
 using Articler.GrainInterfaces.Project;
 using Articler.GrainInterfaces.User;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Articler.WebApi.Services.DataSource
 {
-    public class DocumentService(ILogger<DocumentService> logger, IClusterClient clusterClient) : IDocumentService
+    public class DocumentService(ILogger<DocumentService> logger, IClusterClient clusterClient)
+        : IDocumentService
     {
         private readonly ILogger<DocumentService> _logger = logger;
         private readonly IClusterClient _clusterClient = clusterClient;
+
+        public async Task<IDocument?> AddProjectPdfDocumentAsync(
+            string userId, string projectId, string title, string url)
+        {
+            _logger.LogInformation("DocumentService::AddProjectPdfDocumentAsync: start add project PDF document. " +
+                "UserId={userId} ProjectId={projectId} Title={title} URL={pdfUrl}",
+                userId, projectId, title, url);
+
+            if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(url))
+            {
+                _logger.LogError("DocumentService::AddProjectPdfDocumentAsync: title and url can\'t be empty. " +
+                    "UserId={userId} ProjectId={projectId} Title={title} URL={pdfUrl}",
+                    userId, projectId, title, url);
+                return null;
+            }
+
+            try
+            {
+                var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+                var project = await userGrain.GetProjectById(projectId);
+
+                if (project == null)
+                {
+                    _logger.LogError("DocumentService::AddProjectPdfDocumentAsync: can\'t get project. " +
+                        "UserId={userId} ProjectId={projectId}", userId, projectId);
+                    return null;
+                }
+
+                _logger.LogInformation("DocumentService::AddProjectPdfDocumentAsync: got user project. " +
+                    "ProjectId={projectId} ProjectTitle={projectTitle}", project.Id, project.Title);
+
+                var projectGrain = _clusterClient.GetGrain<IProjectGrain>(project.Id, userId);
+                var document = await projectGrain.AddPdfDocument(title, url);
+
+                _logger.LogInformation("DocumentService::AddProjectPdfDocumentAsync: added PDF document. " +
+                    "UserId={userId} ProjectId={projectId} DocumentId={documentId} DocumentTitle={documentTitle}",
+                    userId, projectId, document.Id, document.Title);
+                return document;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("DocumentService::AddProjectPdfDocumentAsync: exception raised." +
+                    "UserId={userId} ProjectId={projectId} Message: {exMessage}", userId, projectId, ex.Message);
+                throw;
+            }
+        }
 
         public async Task<IDocument?> AddProjectTextDocumentAsync(string userId, string projectId, string title, string text)
         {

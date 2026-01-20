@@ -5,6 +5,7 @@ import { useToast } from 'vuestic-ui'
 import { useI18n } from 'vue-i18n'
 import useDataSourceService from '@/services/dataSourceService'
 import AddTextDataSourceModal from './AddTextDataSourceModal.vue'
+import AddPdfUrlModal from './AddPdfUrlModal.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
 
 const props = defineProps({
@@ -20,7 +21,9 @@ const dataSourceService = useDataSourceService()
 
 const dataSources = ref([])
 const showTextInputModal = ref(false)
+const showPdfUrlModal = ref(false)
 const isUploadingText = ref(false)
+const isUploadingPdf = ref(false)
 const isLoadingDocuments = ref(false)
 const isRemovingDocument = ref(false)
 const showConfirmDialog = ref(false)
@@ -104,6 +107,59 @@ const handleAddText = async ({ name, text }) => {
     })
   } finally {
     isUploadingText.value = false
+  }
+}
+
+const handleAddPdfUrl = async ({ name, url }) => {
+  // Validate that title and url are not empty
+  if (!url || !url.trim() || !name || !name.trim() || isUploadingPdf.value) {
+    if (!name || !name.trim()) {
+      showToast({
+        message: t('project_view.toast.title_cannot_be_empty'),
+        color: 'warning',
+        position: 'top-right',
+        duration: 3000,
+        closeable: true,
+      })
+    } else if (!url || !url.trim()) {
+      showToast({
+        message: t('project_view.toast.invalid_url'),
+        color: 'warning',
+        position: 'top-right',
+        duration: 3000,
+        closeable: true,
+      })
+    }
+    return
+  }
+
+  isUploadingPdf.value = true
+  
+  try {
+    await dataSourceService.addPdfDocument(props.projectId, name, url)
+    
+    // Reload documents after successful upload
+    await loadDocuments()
+    
+    showPdfUrlModal.value = false
+    showToast({
+      message: t('project_view.toast.pdf_url_added'),
+      color: 'success',
+      position: 'top-right',
+      duration: 3000,
+      closeable: true,
+    })
+  } catch (error) {
+    console.error('DataSources::handleAddPdfUrl: Exception: ', error)
+    showToast({
+      message: t('project_view.toast.failed_to_upload_pdf'),
+      color: 'danger',
+      position: 'top-right',
+      duration: 3000,
+      closeable: true,
+    })
+  } finally {
+    isUploadingPdf.value = false
   }
 }
 
@@ -192,6 +248,14 @@ onMounted(() => {
           <Type :size="16" />
           {{ t('project_view.actions.add_text') }}
         </button>
+        <button
+          type="button"
+          @click="showPdfUrlModal = true"
+          class="inline-flex items-center justify-center gap-2 rounded-md border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+        >
+          <FileText :size="16" />
+          {{ t('project_view.actions.add_pdf_url') }}
+        </button>
       </div>
 
       <!-- Text Input Modal -->
@@ -199,6 +263,13 @@ onMounted(() => {
         v-model="showTextInputModal"
         :is-uploading="isUploadingText"
         @submit="handleAddText"
+      />
+
+      <!-- PDF URL Modal -->
+      <AddPdfUrlModal
+        v-model="showPdfUrlModal"
+        :is-uploading="isUploadingPdf"
+        @submit="handleAddPdfUrl"
       />
 
       <!-- Confirm Delete Dialog -->

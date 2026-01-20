@@ -120,6 +120,7 @@ try
     var builder = WebApplication.CreateBuilder(args);
     var env = builder.Environment;
 
+    builder.Services.AddHttpClient();
     ConfigureOptions(builder.Services, builder.Configuration);
     ConfigureServices(builder.Services);
     ConfigureHostedServices(builder.Services);

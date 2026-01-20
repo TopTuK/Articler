@@ -10,6 +10,7 @@ namespace Articler.GrainInterfaces.Document
     public interface IDocumentStorageGrain : IGrainWithGuidCompoundKey
     {
         Task<IDocument> AddTextDocument(string title, string text);
+        Task<IDocument> AddPdfDocument(string title, string url);
         Task<IDocument> RemoveDocument(IDocument document);
     }
 }

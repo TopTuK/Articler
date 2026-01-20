@@ -8,6 +8,7 @@ using Articler.GrainInterfaces.Document;
 using Articler.GrainInterfaces.Project;
 using Microsoft.Extensions.Logging;
 using Orleans.Runtime;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Articler.GrainClasses.Project
 {
@@ -223,7 +224,10 @@ namespace Articler.GrainClasses.Project
                 _logger.LogInformation("ProjectGrain::AddTextDocument: stored document to vector storage. " +
                     "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
                     grainId, userId, document.Id, document.DocumentType, document.Title);
-                _projectDocumentState.State.Documents.Add(document);
+                _projectDocumentState
+                    .State
+                    .Documents
+                    .Add(document);
                 await _projectDocumentState.WriteStateAsync();
 
                 _logger.LogInformation("ProjectGrain::AddTextDocument: writed new document to state. " +
@@ -234,6 +238,43 @@ namespace Articler.GrainClasses.Project
             catch (Exception ex)
             {
                 _logger.LogCritical("ProjectGrain::AddTextDocument: exception raised. " +
+                    "GrainId={grainId} UserId={userId}. Message: {exMsg}", grainId, userId, ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<IDocument> AddPdfDocument(string title, string url)
+        {
+            var grainId = this.GetPrimaryKey(out var userId);
+            _logger.LogInformation("ProjectGrain::AddPdfDocument: add text data source to project. " +
+                "GrainId={grainId}, UserId={userId} Title={title} Url={pdfUrl}",
+                grainId, userId, title, url);
+
+            await CheckProjectState(userId);
+
+            try
+            {
+                _logger.LogInformation("ProjectGrain::AddPdfDocument: call DocumentStorageGrain to store user\'s PDF");
+                var documentGrain = GrainFactory.GetGrain<IDocumentStorageGrain>(grainId, userId!);
+                var document = await documentGrain.AddPdfDocument(title, url);
+
+                _logger.LogInformation("ProjectGrain::AddPdfDocument: stored document to vector storage. " +
+                    "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
+                    grainId, userId, document.Id, document.DocumentType, document.Title);
+                _projectDocumentState
+                    .State
+                    .Documents
+                    .Add(document);
+                await _projectDocumentState.WriteStateAsync();
+
+                _logger.LogInformation("ProjectGrain::AddPdfDocument: writed new document to state. " +
+                    "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
+                    grainId, userId, document.Id, document.DocumentType, document.Title);
+                return document;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("ProjectGrain::AddPdfDocument: exception raised. " +
                     "GrainId={grainId} UserId={userId}. Message: {exMsg}", grainId, userId, ex.Message);
                 throw;
             }
