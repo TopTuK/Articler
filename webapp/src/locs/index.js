@@ -32,9 +32,10 @@ const messages = {
         form: {
           project_title_label: "Project Title",
           project_title_placeholder: "Enter your project title...",
-          description_label: "Description",
-          description_placeholder: "Describe what this project is about...",
-          description_hint: "A brief description helps you organize your projects",
+          description_label: "Theme of post",
+          description_placeholder: "Enter the theme of your post...",
+          description_hint: "Describe the main theme or topic of your post",
+          language_label: "Post Language",
         },
         actions: {
           cancel: "Cancel",
@@ -43,6 +44,7 @@ const messages = {
         },
         toast: {
           title_required: "Please enter a project title.",
+          description_required: "Please enter the theme of your post.",
           project_created: "Your new project has been created successfully.",
         },
       },
@@ -355,9 +357,10 @@ const messages = {
         form: {
           project_title_label: "Название проекта",
           project_title_placeholder: "Введите название проекта...",
-          description_label: "Описание",
-          description_placeholder: "Опишите, о чём этот проект...",
-          description_hint: "Краткое описание поможет вам организовать ваши проекты",
+          description_label: "Тема поста",
+          description_placeholder: "Введите тему вашего поста...",
+          description_hint: "Опишите основную тему или тему вашего поста",
+          language_label: "Язык поста",
         },
         actions: {
           cancel: "Отмена",
@@ -366,6 +369,7 @@ const messages = {
         },
         toast: {
           title_required: "Пожалуйста, введите название проекта.",
+          description_required: "Пожалуйста, введите тему вашего поста.",
           project_created: "Ваш новый проект успешно создан.",
         },
       },

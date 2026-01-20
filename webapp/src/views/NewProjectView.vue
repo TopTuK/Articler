@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft, Save, FileText } from 'lucide-vue-next'
+import { ArrowLeft, Save, FileText, Globe, ChevronDown } from 'lucide-vue-next'
 import { useToast } from 'vuestic-ui'
 import useProjectService from '@/services/projectService'
 
@@ -13,6 +13,7 @@ const { createProject } = useProjectService()
 
 const title = ref('')
 const description = ref('')
+const language = ref(1) // 1 = English (default), 0 = Russian
 const isSubmitting = ref(false)
 
 const handleSubmit = async (e) => {
@@ -28,6 +29,16 @@ const handleSubmit = async (e) => {
     return
   }
 
+  if (!description.value.trim()) {
+    showToast({
+      message: t('new_project.toast.description_required'),
+      color: 'danger',
+      position: 'top-right',
+      duration: 3000,
+    })
+    return
+  }
+
   if (isSubmitting.value) {
     return
   }
@@ -35,7 +46,7 @@ const handleSubmit = async (e) => {
   isSubmitting.value = true
 
   try {
-    await createProject(title.value.trim(), description.value.trim())
+    await createProject(title.value.trim(), description.value.trim(), language.value)
     
     showToast({
       message: t('new_project.toast.project_created'),
@@ -116,17 +127,44 @@ const handleCancel = () => {
             <div class="space-y-2">
               <label for="description" class="text-white font-medium">
                 {{ t('new_project.form.description_label') }}
+                <span class="text-red-400 ml-1">*</span>
               </label>
               <textarea
                 id="description"
                 :placeholder="t('new_project.form.description_placeholder')"
                 v-model="description"
                 rows="5"
+                required
                 class="flex w-full rounded-md border border-gray-700 bg-gray-900/50 backdrop-blur-sm px-4 py-3 text-sm text-white placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:border-purple-500 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
               />
               <p class="text-sm text-gray-400">
                 {{ t('new_project.form.description_hint') }}
               </p>
+            </div>
+
+            <!-- Language Field -->
+            <div class="space-y-2">
+              <label for="language" class="text-white font-medium flex items-center gap-2">
+                <Globe :size="16" class="text-purple-400" />
+                {{ t('new_project.form.language_label') }}
+              </label>
+              <div class="relative group">
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-purple-500/10 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <select
+                  id="language"
+                  v-model="language"
+                  class="relative flex h-14 w-full rounded-xl border border-purple-500/30 bg-gradient-to-br from-gray-900/80 via-gray-900/60 to-gray-800/80 backdrop-blur-sm px-5 pl-12 pr-10 text-base font-medium text-white shadow-lg shadow-purple-500/10 hover:border-purple-500/50 hover:shadow-purple-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 focus-visible:border-purple-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 appearance-none cursor-pointer"
+                >
+                  <option :value="1" class="bg-gray-800 text-white">English</option>
+                  <option :value="0" class="bg-gray-800 text-white">Russian</option>
+                </select>
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <Globe :size="18" class="text-purple-400" />
+                </div>
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown :size="20" class="text-purple-400 group-hover:text-purple-300 transition-colors duration-200" />
+                </div>
+              </div>
             </div>
           </div>
 

@@ -25,24 +25,33 @@ namespace Articler.AppDomain.Factories.Project
             public string Description { get; private set; }
 
             [Id(4)]
+            public ProjectLanguage Language { get; init; }
+
+            [Id(5)]
             public DateTime CreatedDate { get; init; }
 
-            public Project(Guid id, ProjectState state, string title, string description, DateTime createdDate)
+
+            public Project(Guid id, ProjectState state, 
+                string title, string description, ProjectLanguage language,
+                DateTime createdDate)
             {
                 Id = id;
                 State = state;
+
                 Title = title;
                 Description = description;
+                Language = language;
+
                 CreatedDate = createdDate;
             }
         }
 
         public static IProject CreateProject(
             Guid id, ProjectState state,
-            string title, string description, 
+            string title, string description, ProjectLanguage lang,
             DateTime createdDate)
         {
-            return new Project(id, state, title, description, createdDate);
+            return new Project(id, state, title, description, lang, createdDate);
         }
     }
 }

@@ -90,7 +90,7 @@ namespace Articler.GrainClasses.User
             return Task.FromResult(user);
         }
 
-        public async Task<IProject> CreateProject(string title, string description)
+        public async Task<IProject> CreateProject(string title, string description, ProjectLanguage language)
         {
             var grainId = this.GetPrimaryKeyString();
             _logger.LogInformation("UserGrain::AddProject: start create new project. " +
@@ -98,13 +98,15 @@ namespace Articler.GrainClasses.User
 
             var projectId = Guid.NewGuid();
             var projectGrain = GrainFactory.GetGrain<IProjectGrain>(projectId, grainId, null);
-            var project = await projectGrain.Create(title, description);
+            var project = await projectGrain.Create(title, description, language);
 
             _logger.LogInformation("UserGrain::AddProject: created new project. " +
                 "ProjectId={projectId}, State={state}, Title={title}",
                 project.Id, project.State, project.Title);
 
-            _projectsState.State.ProjectIds.Add(projectId);
+            _projectsState.State
+                .ProjectIds
+                .Add(projectId);
             await _projectsState.WriteStateAsync();
             _logger.LogInformation("UserGrain::AddProject: saved projectId to state. " +
                 "GrainId={grainId}, ProjectId={projectId}", grainId, project.Id);

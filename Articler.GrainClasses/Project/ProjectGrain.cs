@@ -7,8 +7,6 @@ using Articler.GrainInterfaces.Chat;
 using Articler.GrainInterfaces.Document;
 using Articler.GrainInterfaces.Project;
 using Microsoft.Extensions.Logging;
-using Orleans.Runtime;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Articler.GrainClasses.Project
 {
@@ -28,11 +26,11 @@ namespace Articler.GrainClasses.Project
         private readonly IPersistentState<ProjectTextGrainState> _projectTextState = projectTextState;
         private readonly IPersistentState<ProjectDocumentGrainState> _projectDocumentState = projectDocumentState;
 
-        public async Task<IProject> Create(string title, string description)
+        public async Task<IProject> Create(string title, string description, ProjectLanguage language)
         {
             var grainId = this.GetPrimaryKey(out var userId);
             _logger.LogInformation("ProjectGrain::Create: start create project. " +
-                "GrainId={grainId}, Title={title}", grainId, title);
+                "GrainId={grainId}, Title={title}, Language={lang}", grainId, title, language);
 
             if (string.IsNullOrEmpty(userId))
             {
@@ -58,6 +56,7 @@ namespace Articler.GrainClasses.Project
             _projectState.State.ProjetState = ProjectState.Unpublished;
             _projectState.State.Title = title;
             _projectState.State.Description = description;
+            _projectState.State.Language = language;
             _projectState.State.CreatedDate = DateTime.UtcNow;
             await _projectState.WriteStateAsync();
 
@@ -66,6 +65,7 @@ namespace Articler.GrainClasses.Project
                 _projectState.State.ProjetState,
                 _projectState.State.Title,
                 _projectState.State.Description,
+                _projectState.State.Language,
                 _projectState.State.CreatedDate
             );
             _logger.LogInformation("ProjectGrain::Create: return new project. " +
@@ -89,6 +89,7 @@ namespace Articler.GrainClasses.Project
                 _projectState.State.ProjetState,
                 _projectState.State.Title,
                 _projectState.State.Description,
+                _projectState.State.Language,
                 _projectState.State.CreatedDate
             );
 
@@ -319,6 +320,7 @@ namespace Articler.GrainClasses.Project
                 _projectState.State.ProjetState,
                 _projectState.State.Title,
                 _projectState.State.Description,
+                _projectState.State.Language,
                 _projectState.State.CreatedDate
             );
             await _projectState.ClearStateAsync();

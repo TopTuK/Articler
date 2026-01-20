@@ -35,7 +35,11 @@ namespace Articler.WebApi.Controllers
 
             try
             {
-                var project = await _projectService.CreateProjectAsync(userId, request.Title, request.Description ?? string.Empty);
+                var project = await _projectService.CreateProjectAsync(
+                    userId, 
+                    request.Title, 
+                    request.Description ?? string.Empty,
+                    request.Language);
                 _logger.LogInformation("ProjectController::Create: project created successfully. " +
                     "UserId={userId}, ProjectId={projectId}", userId, project.Id);
 

@@ -26,6 +26,9 @@ namespace Articler.GrainClasses.Project
         public string Description { get; set; } = string.Empty;
 
         [Id(5)]
+        public ProjectLanguage Language { get; set; } = ProjectLanguage.English;
+
+        [Id(6)]
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     }
 }

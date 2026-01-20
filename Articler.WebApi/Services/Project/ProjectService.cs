@@ -1,7 +1,6 @@
 ﻿using Articler.AppDomain.Models.Project;
 using Articler.GrainInterfaces.Project;
 using Articler.GrainInterfaces.User;
-using System.Security.Cryptography;
 
 namespace Articler.WebApi.Services.Project
 {
@@ -13,16 +12,17 @@ namespace Articler.WebApi.Services.Project
         private readonly ILogger<ProjectService> _logger = logger;
         private readonly IClusterClient _clusterClient = clusterClient;
 
-        public async Task<IProject> CreateProjectAsync(string userId, string title, string description)
+        public async Task<IProject> CreateProjectAsync(string userId, 
+            string title, string description, ProjectLanguage language)
         {
             _logger.LogInformation("ProjectService::CreateProjectAsync: start create user project. " +
-                "UserId={userId}, Title={title}, Description={description}",
-                userId, title, description);
+                "UserId={userId}, Title={title}, Description={description} Language={lang}",
+                userId, title, description, language);
 
             try
             {
                 var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
-                var project = await userGrain.CreateProject(title, description);
+                var project = await userGrain.CreateProject(title, description, language);
 
                 _logger.LogInformation("ProjectService::CreateProjectAsync: create user project. " +
                     "UserId={userId}, ProjectId={projectId} ProjectTitle={projectTitle}, ProjectState={projectState}",

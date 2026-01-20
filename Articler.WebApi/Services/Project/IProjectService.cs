@@ -5,7 +5,7 @@ namespace Articler.WebApi.Services.Project
     public interface IProjectService
     {
         Task<IEnumerable<IProject>> GetUserProjectsAsync(string userId);
-        Task<IProject> CreateProjectAsync(string userId, string title, string description);
+        Task<IProject> CreateProjectAsync(string userId, string title, string description, ProjectLanguage language);
         Task<IProject?> GetUserProjectAsync(string userId, string projectId);
         Task<IProject?> DeleteUserProjectAsync(string userId, string projectId);
 

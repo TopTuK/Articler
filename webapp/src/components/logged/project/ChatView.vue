@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue'
+import { ref, onBeforeMount, nextTick, watch } from 'vue'
 import { Send, RefreshCw } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vuestic-ui'
@@ -23,6 +23,7 @@ const chatMessages = ref([])
 const chatInput = ref('')
 const isSending = ref(false)
 const isLoadingHistory = ref(false)
+const messagesContainer = ref(null)
 
 // Helper to map AgentRole enum to string
 const mapRoleToString = (role) => {
@@ -38,6 +39,19 @@ const mapRoleToString = (role) => {
       return 'unknown'
   }
 }
+
+// Scroll to the bottom of the messages container
+const scrollToBottom = async () => {
+  await nextTick()
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
+}
+
+// Watch for new messages and auto-scroll
+watch(chatMessages, () => {
+  scrollToBottom()
+}, { deep: true })
 
 const handleSendChat = async () => {
   if (!chatInput.value.trim() || isSending.value) return
@@ -208,6 +222,9 @@ const loadChatHistory = async (showSuccessToast = true) => {
         duration: 2000,
       })
     }
+    
+    // Scroll to bottom after loading history
+    await scrollToBottom()
   } catch (error) {
     console.error('ChatView::loadChatHistory: Exception: ', error)
     showToast({
@@ -253,6 +270,7 @@ onBeforeMount(() => {
     <div class="p-4 space-y-4">
       <!-- Chat Messages -->
       <div
+        ref="messagesContainer"
         class="h-[300px] overflow-y-auto space-y-3 p-3 rounded-lg bg-gray-800/20 border border-gray-700/50"
       >
         <p

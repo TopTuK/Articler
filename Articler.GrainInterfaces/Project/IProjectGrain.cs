@@ -11,7 +11,7 @@ namespace Articler.GrainInterfaces.Project
 {
     public interface IProjectGrain : IGrainWithGuidCompoundKey
     {
-        Task<IProject> Create(string title, string description);
+        Task<IProject> Create(string title, string description, ProjectLanguage language);
         Task<IProject> Get();
         Task<IProject> Remove();
 

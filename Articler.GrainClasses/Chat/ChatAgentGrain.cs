@@ -27,7 +27,7 @@ namespace Articler.GrainClasses.Chat
     public class ChatAgentGrain : Grain, IChatAgentGrain
     {
         private static readonly string DOCUMENT_AGENT_INSTRUCTIONS = """
-        You are a helpful assistant that reformulates questions to perform embeddings search.
+        You are a assistant who reformulates questions to perform embeddings search.
         Your task is to reformulate the question taking into account the context of the chat.
         The reformulated question must always explicitly contain the subject of the question.
         You MUST reformulate the question in the SAME language as the user's question.
@@ -35,21 +35,22 @@ namespace Articler.GrainClasses.Chat
         """;
 
         private static readonly string WRITER_AGENT_INSTRUCTIONS = """
-        You are a helpful text writer and editor for different posts.
-        Answer questions to chat OR  provide information what you do and provide updated text of post.
-        If you don't know context of post ask user to provide it even if user asks a question.
-        If user asks you to write text when text of the post should be in markdown format.
-        Use SearchDocuments tool if the request relates to user documents or need specific context.
-        Update text of post on a language it initially created or on language of user message.
+        You are a helpful text writer for different posts. You MUST do next:
+        - Write part of post if user asks you to write part post. Provide information what you did according response rules.
+        - Answer user questions obout theme of post and DO NOT update text of the post. 
+
+        POST RULES:
+        - Post MUST be in markdown format.
+        - Never write in the post what you do or what you do not have enough context. Post text should have content relative to theme of post.
+        - Use SearchDocuments tool if the request relates to user documents or you need specific context. Do not add to reply that you have searched information in user documents.
         
-        LANGUAGE RULE: 
+        LANGUAGE RULES: 
         - You MUST ALWAYS answer in the SAME language as the user's question.
-        - Text of post should be on a language it initially created or on language of user message.
-        TOOL USAGE RULES:
-        - Use available tools only MAX 10 times.
+        - Text of post MUST be on language of project.
+
         RESPONSE RULES:
         - Never answer questions that are not related to theme of the post.
-        - Responses must be in JSON format, contains 2 fields: "AgentReply" field there answer what you done and "PostText" field there should be update text of the post
+        - MUST: your responses must be in JSON format, contains 2 fields: "AgentReply" field there answer what you done and "PostText" field there should be update text of the post
         """;
 
         private readonly ILogger<ChatAgentGrain> _logger;
@@ -58,7 +59,7 @@ namespace Articler.GrainClasses.Chat
         private readonly AIAgent _chatAgent;
         private readonly AIAgent _documentAgent;
         private readonly IVectorStorageService _storageService;
-        private readonly OpenAIClientSettings _clientSettings;
+        //private readonly OpenAIClientSettings _clientSettings;
 
         public ChatAgentGrain(
             ILogger<ChatAgentGrain> logger,
@@ -73,7 +74,7 @@ namespace Articler.GrainClasses.Chat
             _chatHistoryState = chatHistoryState;
 
             var settings = namedSettings.Get(OpenAIClientSettings.DeepSeekOptions);
-            _clientSettings = settings;
+            //_clientSettings = settings;
 
             _documentAgent = openAIClient
                 .GetChatClient(settings.ChatModel)
@@ -230,7 +231,7 @@ namespace Articler.GrainClasses.Chat
             {
                 var messageText = string.IsNullOrWhiteSpace(description)
                     ? $"Assist me to write text. Titles is \"{title}\""
-                    : $"Assist me to write text. Title is \"{title}\". Description of the text is \"{description}\"";
+                    : $"Assist me to write text. Title is \"{title}\". Theme of the post is \"{description}\"";
 
                 var message = ChatMessageFactory.CreateUserMessage(messageText);
                 _chatHistoryState.State.FirstMessage = message;
@@ -289,13 +290,20 @@ namespace Articler.GrainClasses.Chat
                     ? $"* Current documents: [{string.Join(',', projectDocuments.Select(d => $"(Id={d.Id};Title={d.Title})").ToList())}]"
                     : "* There is no any documents.";
 
+                var language = project.Language switch
+                {
+                    AppDomain.Models.Project.ProjectLanguage.Russian => "Russian",
+                    AppDomain.Models.Project.ProjectLanguage.English => "English",
+                    _ => throw new ArgumentOutOfRangeException(nameof(project.Language), "Language of the post is not supported")
+                };
                 if (_chatHistoryState.State.Messages.Count == 0)
                 {
                     promt = $"{_chatHistoryState.State.FirstMessage}." +
-                        message + ".\\n Context is next:" +
+                        message + ". Context is next:" +
                         $"* ProjectId=\"{grainId}\"" +
                         $"* UserId=\"{userId}\"" +
-                        $"* Current text of post=\"{projectText.Text}\".\\n" +
+                        $"* Languange of the post=\"{language}\"" +
+                        $"* Current text of post=\"{projectText.Text}\"." +
                         documentsPromt;
                 }
                 else
@@ -307,7 +315,8 @@ namespace Articler.GrainClasses.Chat
                     promt = $"{message}. Context is next:" +
                         $"* ProjectId=\"{grainId}\"" +
                         $"* UserId=\"{userId}\"" +
-                        $"* Current text of the post=\"{projectText.Text}\".\\n" +
+                        $"* Languange of the post=\"{language}\"" +
+                        $"* Current text of the post=\"{projectText.Text}\"." +
                         documentsPromt;
                 }
 

@@ -111,7 +111,7 @@ const handleKeydown = (e) => {
 
             <!-- Content -->
             <div class="flex-1 overflow-hidden p-6 flex flex-col">
-              <div class="flex-1 min-h-[500px]">
+              <div class="flex-1 min-h-0">
                 <MdEditor
                   :id="editorId"
                   v-model="editorText"

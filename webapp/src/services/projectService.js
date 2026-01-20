@@ -10,13 +10,14 @@ export default function useProjectService() {
 
     const router = useRouter()
 
-    const createProject = async (title, description) => {
-        console.log('ProjectService::createProject: Start create project. title: ', title, ' description: ', description)
+    const createProject = async (title, description, language = 1) => {
+        console.log('ProjectService::createProject: Start create project. title: ', title, ' description: ', description, ' language: ', language)
 
         try {
             const response = await api.post(CREATE_PROJECT_ACTION, {
                 title: title,
-                description: description || ''
+                description: description || '',
+                language: language
             })
             
             const project = response.data
