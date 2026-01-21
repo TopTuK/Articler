@@ -15,11 +15,18 @@
     <PackageReference Include="Aspire.Hosting.AppHost" Version="9.4.2" />
     <PackageReference Include="Aspire.Hosting.Docker" Version="9.5.1-preview.1.25502.11" />
     <PackageReference Include="Aspire.Hosting.NodeJs" Version="9.4.2" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="9.5.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Articler.SiloHost\Articler.SiloHost.csproj" />
     <ProjectReference Include="..\Articler.WebApi\Articler.WebApi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Scripts\*.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
