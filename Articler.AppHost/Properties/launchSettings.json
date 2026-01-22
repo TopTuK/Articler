@@ -50,6 +50,20 @@
         "DOTNET_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22235",
         "POSTGRES_MODE": "docker"
       }
+    },
+    "docker": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:17273;http://localhost:15299",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21200",
+        "DOTNET_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22235",
+        "STARTUP_TYPE": "docker",
+        "POSTGRES_MODE": "docker"
+      }
     }
   }
 }
