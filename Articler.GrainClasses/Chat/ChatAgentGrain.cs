@@ -124,7 +124,7 @@ namespace Articler.GrainClasses.Chat
                     agentResponse = await writerAgentGrain.SendMessage(message);
                     break;
                 case ChatMode.Ask:
-                    var respondAgentGrain = GrainFactory.GetGrain<IWriterAgentGrain>(grainId, userId!);
+                    var respondAgentGrain = GrainFactory.GetGrain<IResponderAgentGrain>(grainId, userId!);
                     agentResponse = await respondAgentGrain.SendMessage(message);
                     break;
                 default:
