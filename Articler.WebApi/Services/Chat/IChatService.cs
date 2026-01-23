@@ -7,6 +7,6 @@ namespace Articler.WebApi.Services.Chat
     {
         Task<IEnumerable<IGrainChatMessage>?> GetChatHistoryAsync(string userId, string projectId);
 
-        Task<IChatMessageResult> SendChatMessageAsync(string userId, string projectId, string message);
+        Task<IChatMessageResult> SendChatMessageAsync(string userId, string projectId, string message, ChatMode chatMode);
     }
 }

@@ -47,7 +47,7 @@ namespace Articler.GrainClasses.Project
             }
 
             var chatGrain = GrainFactory.GetGrain<IChatAgentGrain>(grainId, userId);
-            await chatGrain.CreateChatAgent(title, description);
+            await chatGrain.Create(title, description);
             _logger.LogInformation("ProjectGrain::Create: created chat agent. " +
                 "GrainId={grainId}", grainId);
 
@@ -306,7 +306,7 @@ namespace Articler.GrainClasses.Project
 
             // Remove chat agent grain
             var chatAgentGrain = GrainFactory.GetGrain<IChatAgentGrain>(grainId, userId!);
-            await chatAgentGrain.DeleteChatAgent();
+            await chatAgentGrain.Delete();
 
             // Remove project text
             _logger.LogInformation("ProjectGrain::RemoveProject: removing project text state. " +

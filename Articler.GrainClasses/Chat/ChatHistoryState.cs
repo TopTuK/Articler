@@ -15,7 +15,5 @@ namespace Articler.GrainClasses.Chat
         public List<IGrainChatMessage> Messages { get; set; } = [];
         [Id(1)]
         public IGrainChatMessage? FirstMessage { get; set; } = null;
-        [Id(3)]
-        public string MessageHistory { get; set; } = string.Empty;
     }
 }

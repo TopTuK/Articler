@@ -66,7 +66,7 @@ else
             .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
             .WithEnvironment("DOTNET_ENVIRONMENT", "Development")
             .WithReference(postgres)
-            .WaitFor(postgres);
+            .WaitFor(postgres, WaitBehavior.StopOnResourceUnavailable);
 
         var webApi = builder
             .AddProject<Projects.Articler_WebApi>("api")
@@ -75,7 +75,7 @@ else
             .WithReference(siloHost)
             .WithReference(front)
             .WithHttpsEndpoint(port: 7209)
-            .WaitFor(siloHost);
+            .WaitFor(siloHost, WaitBehavior.StopOnResourceUnavailable);
     }
     else
     {

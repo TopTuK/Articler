@@ -45,7 +45,8 @@ namespace Articler.WebApi.Services.Chat
             }
         }
 
-        public async Task<IChatMessageResult> SendChatMessageAsync(string userId, string projectId, string message)
+        public async Task<IChatMessageResult> SendChatMessageAsync(
+            string userId, string projectId, string message, ChatMode chatMode)
         {
             _logger.LogInformation("ChatService::SendMessageAsync: get message from user. " +
                 "UserId={userId}, ProjectId={projectId}, MessageLength={messageLength}",
@@ -68,8 +69,8 @@ namespace Articler.WebApi.Services.Chat
                     userId, project.Id, project.Title);
 
                 var chatGrain = _clusterClient.GetGrain<IChatAgentGrain>(project.Id, userId);
-                var agentResponse = await chatGrain.SendUserMessage(message);
-                if (agentResponse ==  null)
+                var agentResponse = await chatGrain.SendUserMessage(message, chatMode);
+                if (agentResponse == null)
                 {
                     _logger.LogError("ChatService::SendMessageAsync: agent response is null. " +
                         "UserId={userId}, ProjectId={projectId}}", userId, projectId);

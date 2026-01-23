@@ -4,13 +4,14 @@ export default function useChatService() {
     const SEND_CHAT_MESSAGE_ACTION = "Chat/SendChatMessage"
     const GET_CHAT_HISTORY_ACTION = "Chat/GetChatHistory"
 
-    const sendChatMessage = async (projectId, message) => {
-        console.log('ChatService::sendChatMessage: Start send chat message. ProjectId: ', projectId, ' MessageLength: ', message?.length || 0)
+    const sendChatMessage = async (projectId, message, mode = 0) => {
+        console.log('ChatService::sendChatMessage: Start send chat message. ProjectId: ', projectId, ' MessageLength: ', message?.length || 0, ' Mode: ', mode)
 
         try {
             const response = await api.post(SEND_CHAT_MESSAGE_ACTION, {
                 projectId: projectId,
-                message: message || ''
+                message: message || '',
+                mode: mode || 0
             })
             
             if (response.status === 200) {

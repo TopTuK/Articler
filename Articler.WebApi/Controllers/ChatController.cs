@@ -60,7 +60,7 @@ namespace Articler.WebApi.Controllers
 
             try
             {
-                var chatResponse = await _chatService.SendChatMessageAsync(userId, request.ProjectId, request.Message);
+                var chatResponse = await _chatService.SendChatMessageAsync(userId, request.ProjectId, request.Message, request.Mode);
 
                 _logger.LogInformation("ChatController::SendChatMessage: got chat response. " +
                     "UserId={userId} ProjectId={projectId}. ChatResult={chatResult}",

@@ -24,5 +24,6 @@ namespace Articler.AppDomain.Constants
         public const string ProjectDocumentStateName = "ProjectDocumentState";
 
         public const string ProjectChatHistoryStateName = "ProjectChatHistoryState";
+        public const string AgentChatHistoryStateName = "AgentChatHistoryState";
     }
 }

@@ -24,6 +24,7 @@ const chatInput = ref('')
 const isSending = ref(false)
 const isLoadingHistory = ref(false)
 const messagesContainer = ref(null)
+const chatMode = ref(0) // 0 = Write (default), 1 = Ask
 
 // Helper to map AgentRole enum to string
 const mapRoleToString = (role) => {
@@ -78,7 +79,7 @@ const handleSendChat = async () => {
   chatMessages.value.push(thinkingMessage)
 
   try {
-    const response = await chatService.sendChatMessage(props.projectId, messageToSend)
+    const response = await chatService.sendChatMessage(props.projectId, messageToSend, chatMode.value)
     
     // Remove the thinking message
     const thinkingIndex = chatMessages.value.findIndex(m => m.id === thinkingMessageId)
@@ -298,6 +299,39 @@ onBeforeMount(() => {
             {{ message.content }}
           </p>
           <p v-else class="text-sm text-white">{{ message.content }}</p>
+        </div>
+      </div>
+
+      <!-- Chat Mode Selector -->
+      <div class="flex items-center gap-3">
+        <label class="text-sm font-medium text-gray-300">Mode:</label>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            @click="chatMode = 0"
+            :class="[
+              'px-4 py-2 text-sm font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500',
+              chatMode === 0
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            ]"
+            :disabled="isSending"
+          >
+            Write
+          </button>
+          <button
+            type="button"
+            @click="chatMode = 1"
+            :class="[
+              'px-4 py-2 text-sm font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500',
+              chatMode === 1
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            ]"
+            :disabled="isSending"
+          >
+            Ask
+          </button>
         </div>
       </div>
 
