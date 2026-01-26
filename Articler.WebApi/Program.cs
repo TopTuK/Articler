@@ -167,6 +167,12 @@ try
             policy.RequireAuthenticatedUser();
             policy.RequireClaim("AccountType", "Paid");
         });
+
+        options.AddPolicy("Super", policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.RequireClaim("AccountType", "Super");
+        });
     });
 
     // Configure options

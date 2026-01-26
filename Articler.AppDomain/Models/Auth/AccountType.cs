@@ -12,5 +12,6 @@ namespace Articler.AppDomain.Models.Auth
         Free = 1,
         Trial = 2,
         Paid = 3,
+        Super = 4,
     }
 }

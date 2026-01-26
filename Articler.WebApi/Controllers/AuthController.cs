@@ -104,6 +104,7 @@ namespace Articler.WebApi.Controllers
                     AccountType.Free => "Free",
                     AccountType.Trial => "Trial",
                     AccountType.Paid => "Paid",
+                    AccountType.Super => "Super",
                     _ => throw new NotImplementedException(),
                 };
 

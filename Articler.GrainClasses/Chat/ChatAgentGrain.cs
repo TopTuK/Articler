@@ -1,26 +1,7 @@
 ﻿using Articler.AppDomain.Constants;
 using Articler.AppDomain.Models.Chat;
-using Articler.AppDomain.Services.VectorStorage;
-using Articler.AppDomain.Settings;
-using Articler.GrainClasses.Project;
 using Articler.GrainInterfaces.Chat;
-using Articler.GrainInterfaces.Project;
-using Microsoft.Agents.AI;
-using Microsoft.CodeAnalysis;
-using Microsoft.Extensions.AI;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using OpenAI;
-using OpenAI.Chat;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using ChatResponseFormat = Microsoft.Extensions.AI.ChatResponseFormat;
 
 namespace Articler.GrainClasses.Chat
 {

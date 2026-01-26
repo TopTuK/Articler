@@ -1,5 +1,7 @@
 using Articler.AppDomain.Constants;
+using Articler.AppDomain.Factories.Token;
 using Articler.AppDomain.Services.Document;
+using Articler.AppDomain.Services.TokenService;
 using Articler.AppDomain.Services.VectorStorage;
 using Articler.AppDomain.Settings;
 using Articler.SiloHost.Services;
@@ -100,6 +102,12 @@ static void ConfigureServices(IServiceCollection services)
 
         var client = new OpenAIClient(credential, options);
         return client;
+    });
+
+    // Tokenizers
+    services.AddKeyedTransient<ITokenService>("abc", (sp, _) =>
+    {
+        return TokenServiceFactory.CreateTokenService("");
     });
 
     // Transient services

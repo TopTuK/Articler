@@ -9,5 +9,8 @@ namespace Articler.AppDomain.Models.Chat
     public interface IAgentChatMessageResponse : IGrainChatMessage
     {
         string Text { get; }
+        //int RequestTokenCount { get; }
+        //int ResponseTokenCount { get; }
+        //int TotalTokenCount { get; }
     }
 }

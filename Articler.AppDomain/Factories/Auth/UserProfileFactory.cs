@@ -12,7 +12,7 @@ namespace Articler.AppDomain.Factories.Auth
     {
         [GenerateSerializer]
         public class UserProfile(string email, string firstName, string lastName,
-            AccountType accountType, DateTime createdDate) : IUserProfile
+            AccountType accountType, int tokenCount, DateTime createdDate) : IUserProfile
         {
             [Id(0)]
             public string Email { get; } = email;
@@ -23,14 +23,18 @@ namespace Articler.AppDomain.Factories.Auth
 
             [Id(3)]
             public AccountType AccountType { get; } = accountType;
+
             [Id(4)]
+            public int TokenCount { get; } = tokenCount;
+
+            [Id(5)]
             public DateTime CreatedDate { get; } = createdDate.Date;
         }
 
         public static IUserProfile CreateUserProfile(string email, string firstName, string lastName, 
-            AccountType accountType, DateTime? createdDate = null)
+            AccountType accountType, int tokenCount, DateTime? createdDate = null)
         {
-            return new UserProfile(email, firstName, lastName, accountType, createdDate ?? DateTime.UtcNow);
+            return new UserProfile(email, firstName, lastName, accountType, tokenCount, createdDate ?? DateTime.UtcNow);
         }
     }
 }

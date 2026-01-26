@@ -17,6 +17,8 @@ namespace Articler.AppDomain.Models.Auth
         string LastName { get; }
 
         AccountType AccountType { get; }
+        int TokenCount { get; }
+
         DateTime CreatedDate { get; }
     }
 }

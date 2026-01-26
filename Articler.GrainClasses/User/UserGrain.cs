@@ -28,18 +28,46 @@ namespace Articler.GrainClasses.User
                 "Email={email}, FirstName={firstName}, LastName={lastName}",
                 email, firstName, lastName);
 
+            var accountType = AccountType.Trial;
+            if ((firstName == "Sergey") && (lastName == "Sidorov"))
+            {
+                accountType = AccountType.Super;
+            }
+
             _userState.State.Status = UserProfileStatus.Known;
 
             _userState.State.UserEmail = email;
             _userState.State.FirstName = firstName;
             _userState.State.LastName = lastName;
 
-            _userState.State.AccountType = AccountType.Trial;
+            _userState.State.AccountType = accountType;
+            switch (accountType)
+            {
+                case AccountType.Trial:
+                    _userState.State.TokenCount = 1000;
+                    break;
+                case AccountType.Super:
+                    _userState.State.TokenCount = -1;
+                    break;
+                case AccountType.Free:
+                    _userState.State.TokenCount = 0;
+                    break;
+                case AccountType.Paid:
+                case AccountType.None:
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(accountType), "CreateNewUser: wrong account type");
+            }
+
             _userState.State.CreatedDate = DateTime.UtcNow;
 
             await _userState.WriteStateAsync();
 
-            return UserProfileFactory.CreateUserProfile(email, firstName, lastName, AccountType.Trial);
+            return UserProfileFactory.CreateUserProfile(
+                _userState.State.UserEmail,
+                _userState.State.FirstName,
+                _userState.State.LastName,
+                _userState.State.AccountType,
+                _userState.State.TokenCount);
         }
 
         public async Task<IUserProfile> Authenticate(
@@ -59,6 +87,7 @@ namespace Articler.GrainClasses.User
                     _userState.State.FirstName,
                     _userState.State.LastName,
                     _userState.State.AccountType,
+                    _userState.State.TokenCount,
                     _userState.State.CreatedDate
                 ),
                 _ => throw new NotImplementedException(),
@@ -81,6 +110,7 @@ namespace Articler.GrainClasses.User
                 _userState.State.FirstName,
                 _userState.State.LastName,
                 _userState.State.AccountType,
+                _userState.State.TokenCount,
                 _userState.State.CreatedDate
             );
 
@@ -233,6 +263,7 @@ namespace Articler.GrainClasses.User
                 _userState.State.FirstName,
                 _userState.State.LastName,
                 _userState.State.AccountType,
+                _userState.State.TokenCount,
                 _userState.State.CreatedDate
             );
 

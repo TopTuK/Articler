@@ -26,6 +26,9 @@ namespace Articler.GrainClasses.User
         public AccountType AccountType { get; set; } = AccountType.None;
 
         [Id(5)]
+        public int TokenCount { get; set; } = 0;
+
+        [Id(6)]
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     }
 }

@@ -19,12 +19,13 @@ namespace Articler.GrainClasses.Chat
     public class ResponderAgentGrain : Grain, IResponderAgentGrain
     {
         private static readonly string AGENT_INSTRUCTIONS = """
-        You are a helpful assistant who answers user's questions about topic of the post.
+        You are a helpful assistant who answers user's questions about topic of the post. You should advise user what next to write in the post.
+        You MUST NOT update text of the post. You should only answer the user's question!
 
         RESPONSE RULES:
         - Never answer questions that are not related to the topic of the post.
         - Use SearchDocuments tool if the request relates to user documents or you need specific context.
-        - Responses MUST BE in JSON format, contains 2 fields: "AgentReply" field there answer what you have done and "PostText" field there should be answer to user's question.
+        - Responses MUST BE in JSON format, contains 2 fields: "AgentReply" field there should be your answer and "PostText" field which should be empty string.
         
         LANGUAGE RULES: 
         - You MUST ALWAYS answer in the SAME language as the user's question.
@@ -191,8 +192,13 @@ namespace Articler.GrainClasses.Chat
                 var chatResult = await _chatAgent.RunAsync(promt, thread);
 
                 _logger.LogInformation("ResponderAgentGrain::SendMessage: received agent response. " +
-                    "GrainId={grainId} UserId={userId} ResultTextLength={textLength}",
+                    "GrainId={grainId} UserId={userId} ResultTextLength={textLength} ",
                     grainId, userId, chatResult.Text.Length);
+                _logger.LogInformation("ResponderAgentGrain::SendMessage: token usage. " +
+                    "GrainId={grainId} UserId={userId}" +
+                    "InTokenCount={inputTokensCount}, OutTokenCount={outTokenCount} TotalToken={totalToken}",
+                    grainId, userId, chatResult.Usage?.InputTokenCount, chatResult.Usage?.OutputTokenCount,
+                    chatResult.Usage?.TotalTokenCount);
 
                 var history = thread
                     .Serialize(JsonSerializerOptions.Web)
