@@ -29,9 +29,14 @@ namespace Articler.AppDomain.Models.VectorStorage
         public required string TextChunk { get; init; }
 
         [VectorStoreVector(Dimensions: 1536)]
+        public ReadOnlyMemory<float> Embeddings { get; set; }
+
+        /*
+        [VectorStoreVector(Dimensions: 1536)]
         public ReadOnlyMemory<float> OpenAIEmbeddings { get; set; }
 
         [VectorStoreVector(Dimensions: 1536)]
         public ReadOnlyMemory<float> DeepSeekEmbeddings { get; set; }
+        */
     }
 }

@@ -29,7 +29,7 @@ namespace Articler.GrainClasses.User
                 email, firstName, lastName);
 
             var accountType = AccountType.Trial;
-            if ((firstName == "Sergey") && (lastName == "Sidorov"))
+            if (email.Equals("sergey.sidorov@pmi.moscow"))
             {
                 accountType = AccountType.Super;
             }
@@ -47,7 +47,7 @@ namespace Articler.GrainClasses.User
                     _userState.State.TokenCount = 1000;
                     break;
                 case AccountType.Super:
-                    _userState.State.TokenCount = -1;
+                    _userState.State.TokenCount = 10000;
                     break;
                 case AccountType.Free:
                     _userState.State.TokenCount = 0;
@@ -60,6 +60,12 @@ namespace Articler.GrainClasses.User
 
             _userState.State.CreatedDate = DateTime.UtcNow;
 
+            var userId = this.GetPrimaryKeyString();
+            _logger.LogInformation("UserGrain::CreateNewUser: created new user. " +
+                "UserId={userId} Email={email}, FirstName={firstName}, LastName={lastName}, " +
+                "AccountType={accountType} TokenCount={tokenCount}",
+                userId, _userState.State.UserEmail, _userState.State.FirstName,
+                _userState.State.LastName, _userState.State.AccountType, _userState.State.TokenCount);
             await _userState.WriteStateAsync();
 
             return UserProfileFactory.CreateUserProfile(
@@ -79,6 +85,8 @@ namespace Articler.GrainClasses.User
                 "GrainId={grainId} Email={email}, FirstName={firstName}, LastName={lastName}",
                 grainId, email, firstName, lastName);
 
+            _logger.LogInformation("UserGrain::Authenticate: user state is {userState}. GrainId={grainId}",
+                _userState.State.Status, grainId);
             var user = (_userState.State.Status) switch
             {
                 UserProfileStatus.Unknown => await CreateNewUser(email, firstName, lastName),
@@ -94,8 +102,8 @@ namespace Articler.GrainClasses.User
             };
 
             _logger.LogInformation("UserGrain::Authenticate: return user. " +
-                "Email={email}, FirstName={firstName}, AccountType={accountType}",
-                user.Email, user.FirstName, user.AccountType);
+                "Email={email}, FirstName={firstName}, AccountType={accountType} TokenCount={tokenCount}",
+                user.Email, user.FirstName, user.AccountType, user.TokenCount);
 
             return user;
         }
@@ -271,6 +279,11 @@ namespace Articler.GrainClasses.User
                 "GrainId={grainId}, Email={email}, FirstName={firstName}, AccountType={accountType}",
                 grainId, user.Email, user.FirstName, user.AccountType);
             return user;
+        }
+
+        public Task<int> GetUserTokens()
+        {
+            return Task.FromResult(_userState.State.TokenCount);
         }
     }
 }

@@ -16,6 +16,8 @@ namespace Articler.GrainInterfaces.User
         Task<IUserProfile> GetUser();
         Task<IUserProfile> UpdateUser(string firstName, string lastName);
 
+        Task<int> GetUserTokens();
+
         Task<IProject> CreateProject(string title, string description, ProjectLanguage language);
         Task<IProject> RemoveProject(Guid projectId);
 

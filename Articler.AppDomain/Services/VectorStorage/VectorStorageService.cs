@@ -23,22 +23,22 @@ namespace Articler.AppDomain.Services.VectorStorage
 
         private readonly QdrantSettings _vectorStorageSettings;
         private readonly VectorStore _vectorStore;
-        private readonly OpenAIClientSettings _embeddingSettings;
+        private readonly EmbeddingAgentSettings _embeddingSettings;
         private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
 
         public VectorStorageService(
             ILogger<VectorStorageService> logger,
             VectorStore vectorStore,
             IOptions<QdrantSettings> vectorStorageSettings,
-            [FromKeyedServices("OpenRouter")] OpenAIClient openAIClient,
-            IOptionsSnapshot<OpenAIClientSettings> namedOpenAiSettings)
+            [FromKeyedServices("OpenRouterEmbeddingClient")] OpenAIClient openAIClient,
+            IOptionsSnapshot<EmbeddingAgentSettings> namedOpenAiSettings)
         {
             _logger = logger;
 
             _vectorStorageSettings = vectorStorageSettings.Value;
             _vectorStore = vectorStore;
 
-            var opt = namedOpenAiSettings.Get(OpenAIClientSettings.OpenRouterOptions);
+            var opt = namedOpenAiSettings.Get(EmbeddingAgentSettings.OpenRouter);
             _embeddingSettings = opt;
             _embeddingGenerator = openAIClient
                 .GetEmbeddingClient(opt.EmbeddingModel)
@@ -136,8 +136,10 @@ namespace Articler.AppDomain.Services.VectorStorage
                         DocumentId = documentId.ToString(),
                         Title = title,
                         TextChunk = chunks[i],
+                        Embeddings = embeddingMemory,
                     };
 
+                    /*
                     switch (_embeddingSettings.Name)
                     {
                         case OpenAIClientSettings.OpenAIOptions:
@@ -154,6 +156,7 @@ namespace Articler.AppDomain.Services.VectorStorage
                                 nameof(_embeddingSettings.Name),
                                 $"VectorStorageService::StoreTextAsync: unknown Embeddings name = {_embeddingSettings.Name}");
                     }
+                    */
 
                     records.Add(record);
                 }
@@ -205,6 +208,12 @@ namespace Articler.AppDomain.Services.VectorStorage
                     record.UserId == userId &&
                     record.ProjectId == projectIdString &&
                     record.DocumentId == documentIdString;
+                var searchOptions = new VectorSearchOptions<DocumentStorageRecord>
+                {
+                    Filter = filterExpression,
+                    VectorProperty = doc => doc.Embeddings,
+                };
+                /*
                 var searchOptions = _embeddingSettings.Name switch
                 {
                     OpenAIClientSettings.OpenAIOptions => new VectorSearchOptions<DocumentStorageRecord>
@@ -224,7 +233,7 @@ namespace Articler.AppDomain.Services.VectorStorage
                     },
                     _ => throw new ArgumentOutOfRangeException(nameof(_embeddingSettings.Name)),
                 };
-
+                */
                 _logger.LogInformation("VectorStorageService::RemoveDocumentAsync: searching for records to delete. " +
                     "UserId={userId}, ProjectId={projectId}, DocumentId={documentId}",
                     userId, projectId, documentId);
@@ -322,7 +331,12 @@ namespace Articler.AppDomain.Services.VectorStorage
                 System.Linq.Expressions.Expression<Func<DocumentStorageRecord, bool>> filterExpression = record =>
                     record.UserId == userId &&
                     record.ProjectId == projectIdString;
-
+                var searchOptions = new VectorSearchOptions<DocumentStorageRecord>
+                {
+                    Filter = filterExpression,
+                    VectorProperty = doc => doc.Embeddings,
+                };
+                /*
                 var searchOptions = _embeddingSettings.Name switch
                 {
                     OpenAIClientSettings.OpenAIOptions => new VectorSearchOptions<DocumentStorageRecord>
@@ -342,6 +356,7 @@ namespace Articler.AppDomain.Services.VectorStorage
                     },
                     _ => throw new ArgumentOutOfRangeException(nameof(_embeddingSettings.Name)),
                 };
+                */
 
                 _logger.LogInformation("VectorStorageService::SearchDocumentsAsync: applying filter. " +
                     "UserId={userId}, ProjectId={projectId}, DocumentId={documentId}, Title={title}",

@@ -202,6 +202,7 @@ const messages = {
           email_address: "Email Address",
           account_type: "Account Type",
           member_since: "Member Since",
+          token_count: "Token Count",
         },
         account_types: {
           free: "Free",
@@ -527,6 +528,7 @@ const messages = {
           email_address: "Адрес электронной почты",
           account_type: "Тип аккаунта",
           member_since: "Участник с",
+          token_count: "Количество токенов",
         },
         account_types: {
           free: "Бесплатный",

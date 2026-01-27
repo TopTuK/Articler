@@ -2,7 +2,7 @@
 import { ref, computed, onBeforeMount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft, User, Mail, Calendar, Crown, Edit, Save, X } from 'lucide-vue-next'
+import { ArrowLeft, User, Mail, Calendar, Crown, Edit, Save, X, Coins } from 'lucide-vue-next'
 import useUserService from '@/services/userService'
 
 const router = useRouter()
@@ -14,6 +14,7 @@ const profile = ref({
   firstName: '',
   lastName: '',
   accountType: 'Free',
+  tokenCount: 0,
   createdDate: null,
 })
 
@@ -72,6 +73,7 @@ const loadProfile = async () => {
       firstName: userProfile.firstName,
       lastName: userProfile.lastName,
       accountType: userProfile.accountType,
+      tokenCount: userProfile.tokenCount,
       createdDate: userProfile.createdDate,
     }
   } catch (err) {
@@ -113,6 +115,7 @@ const saveProfile = async () => {
       firstName: updatedProfile.firstName,
       lastName: updatedProfile.lastName,
       accountType: updatedProfile.accountType,
+      tokenCount: updatedProfile.tokenCount,
       createdDate: updatedProfile.createdDate,
     }
     isEditing.value = false
@@ -276,6 +279,16 @@ onBeforeMount(async () => {
               <div class="flex-1">
                 <p class="text-sm text-gray-400">{{ t('profile_view.fields.member_since') }}</p>
                 <p class="font-medium text-white">{{ formattedDate }}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-4 rounded-lg bg-gray-800/50">
+              <div class="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center shrink-0">
+                <Coins class="h-5 w-5 text-purple-400" />
+              </div>
+              <div class="flex-1">
+                <p class="text-sm text-gray-400">{{ t('profile_view.fields.token_count') }}</p>
+                <p class="font-medium text-white">{{ profile.tokenCount.toLocaleString() }}</p>
               </div>
             </div>
           </div>

@@ -9,6 +9,7 @@ namespace Articler.AppDomain.Services.TokenService
 {
     internal class TokenService(string model) : ITokenService
     {
+        
         private readonly Tokenizer _tokenizer = TiktokenTokenizer.CreateForModel(model);
         public string Model { get; } = model;
 

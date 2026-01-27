@@ -19,7 +19,7 @@ if (startupType == "docker")
         .WithEnvironment("POSTGRES_DB", "articler") // for scripts
         .WithUserName(pgUser)
         .WithPassword(pgPassword)
-        .WithDataVolume("articler_postgres")
+        //.WithDataVolume("articler_postgres") // for debug do not save datavolume
         .WithBindMount("Scripts", "/docker-entrypoint-initdb.d")
         .AddDatabase("articler");
 

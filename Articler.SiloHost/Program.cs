@@ -26,6 +26,7 @@ static void ConfigureOptions(IServiceCollection services, IConfiguration configu
     services.Configure<QdrantSettings>(configuration.GetSection("Qdrant"));
 
     // configure openai clients
+    /*
     services.Configure<OpenAIClientSettings>(
         OpenAIClientSettings.OpenAIOptions, 
         configuration.GetSection("OpenAI"));
@@ -35,6 +36,18 @@ static void ConfigureOptions(IServiceCollection services, IConfiguration configu
     services.Configure<OpenAIClientSettings>(
         OpenAIClientSettings.OpenRouterOptions,
         configuration.GetSection("OpenRouter"));
+    */
+
+    services.Configure<ChatAgentSettings>(
+        ChatAgentSettings.OpenAI,
+        configuration.GetRequiredSection("ChatAgent:OpenAI"));
+    services.Configure<ChatAgentSettings>(
+        ChatAgentSettings.DeepSeek,
+        configuration.GetRequiredSection("ChatAgent:DeepSeek"));
+
+    services.Configure<EmbeddingAgentSettings>(
+        EmbeddingAgentSettings.OpenRouter,
+        configuration.GetRequiredSection("EmbeddingAgent:OpenRouter"));
 }
 
 static void ConfigureServices(IServiceCollection services)
@@ -55,60 +68,41 @@ static void ConfigureServices(IServiceCollection services)
         return new QdrantVectorStore(
             sp.GetRequiredService<QdrantClient>(),
             ownsClient: false,
-            options: new()
+            options: new() // Decided to use different collections
             {
                 HasNamedVectors = true,
             }
         );
     });
 
-    services.AddKeyedSingleton<OpenAIClient>("OpenAI", (sp, opt) =>
+    // Singleton -> Transient
+    services.AddKeyedTransient<OpenAIClient>("DeepSeekChatClient", (sp, opt) =>
     {
-        var settings = sp.GetOptionsByName<OpenAIClientSettings>(OpenAIClientSettings.OpenAIOptions);
-
+        var settings = sp.GetOptionsByName<ChatAgentSettings>(ChatAgentSettings.DeepSeek);
         var credential = new ApiKeyCredential(settings.ApiKey);
         var options = new OpenAIClientOptions
         {
             Endpoint = new Uri(settings.BaseUrl)
         };
 
-        var client = new OpenAIClient(credential, options);
-        return client;
+        return new OpenAIClient(credential, options);
     });
 
-    services.AddKeyedSingleton<OpenAIClient>("DeepSeek", (sp, opt) =>
+    // Singleton -> Transient
+    services.AddKeyedTransient<OpenAIClient>("OpenRouterEmbeddingClient", (sp, opt) =>
     {
-        var settings = sp.GetOptionsByName<OpenAIClientSettings>(OpenAIClientSettings.DeepSeekOptions);
-
+        var settings = sp.GetOptionsByName<EmbeddingAgentSettings>(EmbeddingAgentSettings.OpenRouter);
         var credential = new ApiKeyCredential(settings.ApiKey);
         var options = new OpenAIClientOptions
         {
             Endpoint = new Uri(settings.BaseUrl)
         };
 
-        var client = new OpenAIClient(credential, options);
-        return client;
-    });
-
-    services.AddKeyedSingleton<OpenAIClient>("OpenRouter", (sp, opt) =>
-    {
-        var settings = sp.GetOptionsByName<OpenAIClientSettings>(OpenAIClientSettings.OpenRouterOptions);
-
-        var credential = new ApiKeyCredential(settings.ApiKey);
-        var options = new OpenAIClientOptions
-        {
-            Endpoint = new Uri(settings.BaseUrl)
-        };
-
-        var client = new OpenAIClient(credential, options);
-        return client;
+        return new OpenAIClient(credential, options);
     });
 
     // Tokenizers
-    services.AddKeyedTransient<ITokenService>("abc", (sp, _) =>
-    {
-        return TokenServiceFactory.CreateTokenService("");
-    });
+    // TBD
 
     // Transient services
     services.AddTransient<IVectorStorageService, VectorStorageService>();

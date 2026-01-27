@@ -45,15 +45,14 @@ namespace Articler.GrainClasses.Chat
             ILogger<WriterAgentGrain> logger,
             [PersistentState(OrleansConstants.AgentChatHistoryStateName, OrleansConstants.AdoStorageProviderName)]
                 IPersistentState<AgentHistoryState> agentHistoryState,
-            [FromKeyedServices("DeepSeek")] OpenAIClient openAIClient,
-            IOptionsSnapshot<OpenAIClientSettings> namedSettings)
+            [FromKeyedServices("DeepSeekChatClient")] OpenAIClient openAIClient,
+            IOptionsSnapshot<ChatAgentSettings> namedSettings)
         {
             _logger = logger;
 
             _agentChatState = agentHistoryState;
 
-            var settings = namedSettings.Get(OpenAIClientSettings.DeepSeekOptions);
-
+            var settings = namedSettings.Get(ChatAgentSettings.DeepSeek);
             var chatAgentScheme = AIJsonUtilities.CreateJsonSchema(typeof(AIChatAgentResponseFormat));
             var chatOptions = new ChatOptions
             {

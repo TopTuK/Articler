@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "webapp", "webapp\webapp.esproj", "{BC7042E0-E208-45CC-A5F0-BBE2A1DA2F53}"
 EndProject
@@ -18,8 +18,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Articler.GrainClasses", "Articler.GrainClasses\Articler.GrainClasses.csproj", "{FF6A79EC-A347-4193-9ADF-D9098E4738D6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Articler.SiloHost", "Articler.SiloHost\Articler.SiloHost.csproj", "{58CAE780-4EC5-4B73-9B61-FFDEC0A5A23F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articler.TestApp", "Articler.TestApp\Articler.TestApp.csproj", "{E3336D46-20EF-4AC5-9A1E-75251756F92D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3CF25415-9E1F-432C-B431-CFDFCF4A3390}"
 	ProjectSection(SolutionItems) = preProject
@@ -68,10 +66,6 @@ Global
 		{58CAE780-4EC5-4B73-9B61-FFDEC0A5A23F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58CAE780-4EC5-4B73-9B61-FFDEC0A5A23F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58CAE780-4EC5-4B73-9B61-FFDEC0A5A23F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E3336D46-20EF-4AC5-9A1E-75251756F92D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E3336D46-20EF-4AC5-9A1E-75251756F92D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E3336D46-20EF-4AC5-9A1E-75251756F92D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E3336D46-20EF-4AC5-9A1E-75251756F92D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

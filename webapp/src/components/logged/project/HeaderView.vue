@@ -3,11 +3,13 @@ import VLogo from '@/components/common/VLogo.vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useUserStore } from '@/stores/userStore'
 import { nextTick } from 'vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 
 const goToProjects = () => {
   router.push({ name: 'Projects' })
@@ -35,6 +37,9 @@ const handleLogout = async () => {
       </router-link>
 
       <div class="flex items-center gap-3">
+        <span class="text-white/80 font-medium px-3 py-1.5">
+          Tokens: {{ userStore.userTokenCount }}
+        </span>
         <va-button 
           class="btn-variegated-secondary" 
           @click="goToProjects"
@@ -120,6 +125,7 @@ const handleLogout = async () => {
   padding: 1.5px !important;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) !important;
   -webkit-mask-composite: xor !important;
   mask-composite: exclude !important;
   opacity: 0 !important;

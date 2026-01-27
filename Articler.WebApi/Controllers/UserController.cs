@@ -47,6 +47,31 @@ namespace Articler.WebApi.Controllers
         }
 
         [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetUserToken()
+        {
+            var userId = HttpContext.Items["UserId"]!.ToString();
+            _logger.LogInformation("UserController::GetUserToken: start get user tokens. " +
+                "UserId={userId}", userId);
+
+            try
+            {
+                var userTokens = await _authenticationService.GetUserTokenCountAsync(userId!);
+
+                _logger.LogInformation("UserController::GetUserToken: return user tokens. " +
+                    "Email={email}, TokenCount={tokenCount}",
+                    userTokens.Email, userTokens.TokenCount);
+                return new JsonResult(userTokens);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("UserController::GetUserToken: exception raised. " +
+                    "Email={email} Message={message}", userId, ex.Message);
+                return BadRequest();
+            }
+        }
+
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
         {

@@ -1,6 +1,7 @@
 ﻿using Articler.AppDomain.Factories.Auth;
 using Articler.AppDomain.Models.Auth;
 using Articler.GrainInterfaces.User;
+using Articler.WebApi.Models.User;
 using System.Security.Authentication;
 using System.Security.Claims;
 
@@ -180,6 +181,32 @@ namespace Articler.WebApi.Services.Auth
             {
                 _logger.LogCritical("AuthenticationService::UpdateUserAsync: exception raised. Msg: {exMsg}", ex.Message);
                 throw new AuthenticationException("Inner exception raised.", ex);
+            }
+        }
+
+        public async Task<UserTokens> GetUserTokenCountAsync(string email)
+        {
+            _logger.LogInformation("AuthenticationService::GetUserTokenCountAsync: start get users tokens. " +
+                "Email={email}", email);
+
+            try
+            {
+                var userGrain = _clusterClient.GetGrain<IUserGrain>(email);
+                var tokens = await userGrain.GetUserTokens();
+
+                _logger.LogInformation("AuthenticationService::GetUserTokenCountAsync: got user token count. " +
+                    "Email={email}, TokenCount={tokenCount}", email, tokens);
+                return new()
+                {
+                    Email = email,
+                    TokenCount = tokens
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical("AuthenticationService::GetUserTokenCountAsync: exception raised. " +
+                    "Email={email}, Message={message}", email, ex.Message);
+                throw;
             }
         }
     }

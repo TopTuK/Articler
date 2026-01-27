@@ -1,4 +1,5 @@
 ﻿using Articler.AppDomain.Models.Auth;
+using Articler.WebApi.Models.User;
 using System.Security.Claims;
 
 namespace Articler.WebApi.Services.Auth
@@ -10,5 +11,7 @@ namespace Articler.WebApi.Services.Auth
 
         Task<IUserProfile> GetUserAsync(string email);
         Task<IUserProfile> UpdateUserAsync(string email, string firstName, string lastName);
+
+        Task<UserTokens> GetUserTokenCountAsync(string email);
     }
 }
