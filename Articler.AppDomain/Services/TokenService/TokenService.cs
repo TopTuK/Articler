@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Articler.AppDomain.Services.TokenService
 {
-    internal class TokenService(string model) : ITokenService
+    internal class CalculateTokenService(string model) : ICalculateTokenService
     {
         
         private readonly Tokenizer _tokenizer = TiktokenTokenizer.CreateForModel(model);

@@ -102,9 +102,9 @@ namespace Articler.AppDomain.Services.VectorStorage
 
                 // Generate embeddings for all chunks
                 var chunkEmbeddings = await _embeddingGenerator.GenerateAsync(chunks);
+
                 _logger.LogInformation("VectorStorageService::StoreTextAsync: generated {chunkEmbeddingsCount} embeddings chunks. " +
                     "UserId={userId}, ProjectId={projectId}", chunkEmbeddings.Count, userId, projectId);
-
                 if (chunkEmbeddings.Count != chunks.Count)
                 {
                     _logger.LogCritical("VectorStorageService::StoreTextAsync: Embedding count ({chunkEmbeddingsCount}) does not match chunk count ({chunksCount})",

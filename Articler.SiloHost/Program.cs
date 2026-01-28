@@ -25,19 +25,6 @@ static void ConfigureOptions(IServiceCollection services, IConfiguration configu
     // Configure QDrant settings
     services.Configure<QdrantSettings>(configuration.GetSection("Qdrant"));
 
-    // configure openai clients
-    /*
-    services.Configure<OpenAIClientSettings>(
-        OpenAIClientSettings.OpenAIOptions, 
-        configuration.GetSection("OpenAI"));
-    services.Configure<OpenAIClientSettings>(
-        OpenAIClientSettings.DeepSeekOptions,
-        configuration.GetSection("DeepSeek"));
-    services.Configure<OpenAIClientSettings>(
-        OpenAIClientSettings.OpenRouterOptions,
-        configuration.GetSection("OpenRouter"));
-    */
-
     services.Configure<ChatAgentSettings>(
         ChatAgentSettings.OpenAI,
         configuration.GetRequiredSection("ChatAgent:OpenAI"));
@@ -102,7 +89,11 @@ static void ConfigureServices(IServiceCollection services)
     });
 
     // Tokenizers
-    // TBD
+    services.AddTransient<ICalculateTokenService>(sp =>
+    {
+        //var settings = sp.GetOptionsByName<EmbeddingAgentSettings>(EmbeddingAgentSettings.OpenRouter);
+        return TokenServiceFactory.CreateCalculateTokenService("text-embedding-3-small");
+    });
 
     // Transient services
     services.AddTransient<IVectorStorageService, VectorStorageService>();

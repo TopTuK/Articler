@@ -1,0 +1,14 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Articler.AppDomain.Models.Token
+{
+    public interface ICalculateTokenResult<TResult>
+    {
+        CalculateTokenStatus Status { get; }
+        TResult? Result { get; }
+    }
+}

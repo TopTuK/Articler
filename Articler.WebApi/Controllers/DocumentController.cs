@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
-using static Articler.AppDomain.Factories.Project.ProjectFactory;
 
 namespace Articler.WebApi.Controllers
 {
@@ -82,7 +81,6 @@ namespace Articler.WebApi.Controllers
                     "UserId={userId} ProjectId={projectId} Message: {exMsg}", userId, request.ProjectId, ex.Message);
                 return BadRequest();
             }
-            throw new NotImplementedException();
         }
 
 
@@ -94,29 +92,42 @@ namespace Articler.WebApi.Controllers
             _logger.LogInformation("DocumentController::AddTextDocument: received text data source. " +
                 "UserId={userId}, Request=[{request}]", userId, request);
 
-            try
+            var documentResult = await _documentService.AddProjectTextDocumentAsync(userId, request.ProjectId,
+                request.Title, request.Text);
+            if (documentResult.Status != AppDomain.Models.Token.CalculateTokenStatus.Success)
             {
-                var document = await _documentService.AddProjectTextDocumentAsync(userId, request.ProjectId, 
-                    request.Title, request.Text);
-
-                if (document == null)
+                IActionResult result = null!;
+                
+                switch (documentResult.Status)
                 {
-                    _logger.LogError("DataSourceController::AddTextDocument: can\'t add text document." +
-                        "UserId={userId}, Request=[{request}]", userId, request);
-                    return BadRequest();
+                    case AppDomain.Models.Token.CalculateTokenStatus.NoTokens:
+                    case AppDomain.Models.Token.CalculateTokenStatus.NotEnoughTokens:
+                        _logger.LogInformation("DocumentController::AddTextDocument: not enough tokens for request. " +
+                            "UserId={userId} Status={tokenStatus}", userId, documentResult.Status);
+                        result = StatusCode(402, "Not enogh tokens");
+                        break;
+                    case AppDomain.Models.Token.CalculateTokenStatus.InternalError:
+                        _logger.LogInformation("DocumentController::AddTextDocument: internal error. " +
+                            "UserId={userId} Status={tokenStatus}", userId, documentResult.Status);
+                        result = NotFound("Internal error");
+                        break;
+                    case AppDomain.Models.Token.CalculateTokenStatus.ExceptionRaised:
+                        _logger.LogInformation("DocumentController::AddTextDocument: exception raised. " +
+                            "UserId={userId} Status={tokenStatus}", userId, documentResult.Status);
+                        result = BadRequest("Exception raised");
+                        break;
+                    case AppDomain.Models.Token.CalculateTokenStatus.Success:
+                    default:
+                        return BadRequest("Make compiler happy");
                 }
+                return result;
+            }
 
-                _logger.LogInformation("DataSourceController::AddTextDocument: sucessfully added text document. " +
-                    "UserId={userId}, ProjectId={projectId} DocumentId={documentId} DocumentTitle={documentTitle}",
-                    userId, request.ProjectId, document.Id, document.Title);
-                return new JsonResult(document);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogCritical("DataSourceController::AddTextDocument: exception raised. " +
-                    "Message={exMsg}", ex.Message);
-                return BadRequest("Exception raised");
-            }
+            var document = documentResult.Result!;
+            _logger.LogInformation("DataSourceController::AddTextDocument: sucessfully added text document. " +
+                "UserId={userId}, ProjectId={projectId} DocumentId={documentId} DocumentTitle={documentTitle}",
+                userId, request.ProjectId, document.Id, document.Title);
+            return new JsonResult(document);
         }
 
         [Authorize]
@@ -124,32 +135,45 @@ namespace Articler.WebApi.Controllers
         public async Task<IActionResult> AddPdfDocument(PdfDataSourceDocumentRequest request)
         {
             var userId = HttpContext.Items["UserId"]!.ToString()!;
-            _logger.LogInformation("DocumentController::AddTextDocument: received text data source. " +
+            _logger.LogInformation("DocumentController::AddPdfDocument: received text data source. " +
                 "UserId={userId}, Request=[{request}]", userId, request);
 
-            try
+            var documentResult = await _documentService.AddProjectPdfDocumentAsync(userId, request.ProjectId,
+                request.Title, request.PdfUrl);
+            if (documentResult.Status != AppDomain.Models.Token.CalculateTokenStatus.Success)
             {
-                var document = await _documentService.AddProjectPdfDocumentAsync(userId, request.ProjectId,
-                    request.Title, request.PdfUrl);
+                IActionResult result = null!;
 
-                if (document == null)
+                switch (documentResult.Status)
                 {
-                    _logger.LogError("DataSourceController::AddPdfDocument: can\'t add PDF document." +
-                        "UserId={userId}, Request=[{request}]", userId, request);
-                    return BadRequest();
+                    case AppDomain.Models.Token.CalculateTokenStatus.NoTokens:
+                    case AppDomain.Models.Token.CalculateTokenStatus.NotEnoughTokens:
+                        _logger.LogInformation("DocumentController::AddPdfDocument: not enough tokens for request. " +
+                            "UserId={userId} Status={tokenStatus}", userId, documentResult.Status);
+                        result = StatusCode(402, "Not enogh tokens");
+                        break;
+                    case AppDomain.Models.Token.CalculateTokenStatus.InternalError:
+                        _logger.LogInformation("DocumentController::AddPdfDocument: internal error. " +
+                            "UserId={userId} Status={tokenStatus}", userId, documentResult.Status);
+                        result = NotFound("Internal error");
+                        break;
+                    case AppDomain.Models.Token.CalculateTokenStatus.ExceptionRaised:
+                        _logger.LogInformation("DocumentController::AddPdfDocument: exception raised. " +
+                            "UserId={userId} Status={tokenStatus}", userId, documentResult.Status);
+                        result = BadRequest("Exception raised");
+                        break;
+                    case AppDomain.Models.Token.CalculateTokenStatus.Success:
+                    default:
+                        return BadRequest("Make compiler happy");
                 }
+                return result;
+            }
 
-                _logger.LogInformation("DataSourceController::AddPdfDocument: sucessfully added PDF document. " +
-                    "UserId={userId}, ProjectId={projectId} DocumentId={documentId} DocumentTitle={documentTitle}",
-                    userId, request.ProjectId, document.Id, document.Title);
-                return new JsonResult(document);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogCritical("DataSourceController::AddPdfDocument: exception raised. " +
-                    "Message={exMsg}", ex.Message);
-                return BadRequest("Exception raised");
-            }
+            var document = documentResult.Result!;
+            _logger.LogInformation("DataSourceController::AddPdfDocument: sucessfully added PDF document. " +
+                "UserId={userId}, ProjectId={projectId} DocumentId={documentId} DocumentTitle={documentTitle}",
+                userId, request.ProjectId, document.Id, document.Title);
+            return new JsonResult(document);
         }
     }
 }

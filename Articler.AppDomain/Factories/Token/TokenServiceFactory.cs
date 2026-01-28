@@ -9,9 +9,9 @@ namespace Articler.AppDomain.Factories.Token
 {
     public static class TokenServiceFactory
     {
-        public static ITokenService CreateTokenService(string model)
+        public static ICalculateTokenService CreateCalculateTokenService(string model)
         {
-            return new TokenService(model);
+            return new CalculateTokenService(model);
         }
     }
 }

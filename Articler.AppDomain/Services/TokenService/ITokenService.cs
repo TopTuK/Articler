@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Articler.AppDomain.Services.TokenService
 {
-    public interface ITokenService
+    public interface ICalculateTokenService
     {
         string Model { get; }
         int CountTokens(string text);

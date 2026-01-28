@@ -1,7 +1,10 @@
 ﻿using Articler.AppDomain.Models.Documents;
+using Articler.AppDomain.Models.Token;
 using Articler.AppDomain.Services.Document;
 using Articler.AppDomain.Services.VectorStorage;
+using Articler.GrainClasses.Token;
 using Articler.GrainInterfaces.Document;
+using Articler.GrainInterfaces.User;
 using Microsoft.Extensions.Logging;
 using OpenAI;
 using Qdrant.Client;
@@ -23,7 +26,7 @@ namespace Articler.GrainClasses.Document
         private readonly IVectorStorageService _vectorStorageService = vectorStorageService;
         private readonly IPdfDocumentService _pdfDocumentService = pdfDocumentService;
 
-        public async Task<IDocument> AddPdfDocument(string title, string url)
+        public async Task<ICalculateTokenResult<IDocument>> AddPdfDocument(string title, string url)
         {
             var grainId = this.GetPrimaryKey(out var userId);
             _logger.LogInformation("DocumentStorageGrain::AddPdfDocument: start add user PDF document. " +
@@ -44,8 +47,19 @@ namespace Articler.GrainClasses.Document
                     "GrainId={grainId} UserId={userId}, URL={pdfUrl}", grainId, userId, url);
                 var text = await _pdfDocumentService.DownloadAndParsePdfDocumentAsync(url);
 
+                var userGrain = GrainFactory.GetGrain<IUserGrain>(userId);
+                var calculateTokenResult = await userGrain.CalculateEmbeddingsTokens(text);
+
+                if (calculateTokenResult.Status != CalculateTokenStatus.Success)
+                {
+                    _logger.LogWarning("DocumentStorageGrain::AddPdfDocument: user don\'t have enough tokens. " +
+                        "GrainId={grainId}, UserId={userId}, TextLength={textLength}, MaxToken={maxToken}",
+                        grainId, userId, text.Length, calculateTokenResult.MaxTokenCount);
+                    return CalculateTokenResultFactory<IDocument>.CreateTokenResult(calculateTokenResult.Status);
+                }
+
                 _logger.LogInformation("DocumentStorageGrain::AddPdfDocument: parsed PDF document from URL. " +
-                    "GrainId={grainId} UserId={userId}, URL={pdfUrl} TextLengt={textLength}",
+                    "GrainId={grainId}, UserId={userId}, URL={pdfUrl}, TextLengt={textLength}",
                     grainId, userId, url, text.Length);
 
                 // Save document to vector DB
@@ -57,7 +71,7 @@ namespace Articler.GrainClasses.Document
                 _logger.LogInformation("DocumentStorageGrain::AddPdfDocument: successfully store document to vector db. " +
                     "GrainId={grainId} UserId={userId} DocumentId={documentId} DocumentType={documentType} DocumentTitile={documentTitle}",
                     grainId, userId, document.Id, document.DocumentType, document.Title);
-                return document;
+                return CalculateTokenResultFactory<IDocument>.CreateTokenResult(calculateTokenResult.Status, document);
             }
             catch (Exception ex)
             {
@@ -67,7 +81,7 @@ namespace Articler.GrainClasses.Document
             }
         }
 
-        public async Task<IDocument> AddTextDocument(string title, string text)
+        public async Task<ICalculateTokenResult<IDocument>> AddTextDocument(string title, string text)
         {
             var grainId = this.GetPrimaryKey(out var userId);
             _logger.LogInformation("DocumentStorageGrain::AddTextDocument: start add user text document. " +
@@ -83,15 +97,26 @@ namespace Articler.GrainClasses.Document
 
             try
             {
+                var userGrain = GrainFactory.GetGrain<IUserGrain>(userId);
+                var calculateTokenResult = await userGrain.CalculateEmbeddingsTokens(text);
+                
+                if (calculateTokenResult.Status != CalculateTokenStatus.Success)
+                {
+                    _logger.LogWarning("DocumentStorageGrain::AddTextDocument: user don\'t have enough tokens. " +
+                        "GrainId={grainId}, UserId={userId}, TextLength={textLength} MaxToken={maxToken}",
+                        grainId, userId, text.Length, calculateTokenResult.MaxTokenCount);
+                    return CalculateTokenResultFactory<IDocument>.CreateTokenResult(calculateTokenResult.Status);
+                }
+
                 var documentId = Guid.NewGuid();
                 _logger.LogInformation("DocumentStorageGrain::AddTextDocument: created id of new document. " +
                     "GrainId={grainId} UserId={userId} DocumentId={documentId}", grainId, userId, documentId);
                 var document = await _vectorStorageService.StoreTextAsync(userId, grainId, documentId, title, text);
 
                 _logger.LogInformation("DocumentStorageGrain::AddTextDocument: successfully store document to vector db. " +
-                    "GrainId={grainId} UserId={userId} DocumentId={documentId} DocumentType={documentType} DocumentTitile={documentTitle}",
+                    "GrainId={grainId} UserId={userId} DocumentId={documentId} DocumentType={documentType} DocumentTitle={documentTitle}",
                     grainId, userId, document.Id, document.DocumentType, document.Title);
-                return document;
+                return CalculateTokenResultFactory<IDocument>.CreateTokenResult(calculateTokenResult.Status, document);
             }
             catch (Exception ex)
             {

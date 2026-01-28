@@ -1,7 +1,8 @@
 ﻿using Articler.AppDomain.Models.Documents;
+using Articler.AppDomain.Models.Token;
 using Articler.GrainInterfaces.Project;
 using Articler.GrainInterfaces.User;
-using static System.Net.Mime.MediaTypeNames;
+using Articler.WebApi.Models.TokenResult;
 
 namespace Articler.WebApi.Services.DataSource
 {
@@ -11,7 +12,7 @@ namespace Articler.WebApi.Services.DataSource
         private readonly ILogger<DocumentService> _logger = logger;
         private readonly IClusterClient _clusterClient = clusterClient;
 
-        public async Task<IDocument?> AddProjectPdfDocumentAsync(
+        public async Task<ICalculateTokenResult<IDocument>> AddProjectPdfDocumentAsync(
             string userId, string projectId, string title, string url)
         {
             _logger.LogInformation("DocumentService::AddProjectPdfDocumentAsync: start add project PDF document. " +
@@ -23,7 +24,7 @@ namespace Articler.WebApi.Services.DataSource
                 _logger.LogError("DocumentService::AddProjectPdfDocumentAsync: title and url can\'t be empty. " +
                     "UserId={userId} ProjectId={projectId} Title={title} URL={pdfUrl}",
                     userId, projectId, title, url);
-                return null;
+                return TokenResultFactory.CreateTokenResult<IDocument>(CalculateTokenStatus.InternalError);
             }
 
             try
@@ -35,29 +36,45 @@ namespace Articler.WebApi.Services.DataSource
                 {
                     _logger.LogError("DocumentService::AddProjectPdfDocumentAsync: can\'t get project. " +
                         "UserId={userId} ProjectId={projectId}", userId, projectId);
-                    return null;
+                    return TokenResultFactory.CreateTokenResult<IDocument>(CalculateTokenStatus.InternalError);
                 }
 
                 _logger.LogInformation("DocumentService::AddProjectPdfDocumentAsync: got user project. " +
                     "ProjectId={projectId} ProjectTitle={projectTitle}", project.Id, project.Title);
 
                 var projectGrain = _clusterClient.GetGrain<IProjectGrain>(project.Id, userId);
-                var document = await projectGrain.AddPdfDocument(title, url);
+                var documentTokenResult = await projectGrain.AddPdfDocument(title, url);
 
+                if (documentTokenResult.Status != CalculateTokenStatus.Success)
+                {
+                    _logger.LogWarning("DocumentService::AddProjectPdfDocumentAsync: calculate token status is not success. " +
+                        "UserId={userId}, ProjectId={projectId}, CalculateTokenStatus={tokenStatus}",
+                        userId, projectId, documentTokenResult.Status);
+                    return TokenResultFactory.CreateTokenResult<IDocument>(documentTokenResult.Status);
+                }
+                else if (documentTokenResult.Result == null)
+                {
+                    _logger.LogError("DocumentService::AddProjectPdfDocumentAsync: calculate token status but doocument is null. " +
+                        "UserId={userId}, ProjectId={projectId}, CalculateTokenStatus={tokenStatus}",
+                        userId, projectId, documentTokenResult.Status);
+                    return TokenResultFactory.CreateTokenResult<IDocument>(CalculateTokenStatus.InternalError);
+                }
+                
+                var document = documentTokenResult.Result;
                 _logger.LogInformation("DocumentService::AddProjectPdfDocumentAsync: added PDF document. " +
                     "UserId={userId} ProjectId={projectId} DocumentId={documentId} DocumentTitle={documentTitle}",
                     userId, projectId, document.Id, document.Title);
-                return document;
+                return documentTokenResult;
             }
             catch (Exception ex)
             {
                 _logger.LogCritical("DocumentService::AddProjectPdfDocumentAsync: exception raised." +
                     "UserId={userId} ProjectId={projectId} Message: {exMessage}", userId, projectId, ex.Message);
-                throw;
+                return TokenResultFactory.CreateTokenResult<IDocument>(CalculateTokenStatus.ExceptionRaised);
             }
         }
 
-        public async Task<IDocument?> AddProjectTextDocumentAsync(string userId, string projectId, string title, string text)
+        public async Task<ICalculateTokenResult<IDocument>> AddProjectTextDocumentAsync(string userId, string projectId, string title, string text)
         {
             _logger.LogInformation("DocumentService::AddProjectTextDocumentAsync: start add project text document. " +
                 "UserId={userId} ProjectId={projectId} Title={title} TextLength={textLength}",
@@ -68,7 +85,7 @@ namespace Articler.WebApi.Services.DataSource
                 _logger.LogError("DocumentService::AddProjectTextDocumentAsync: title and text can\'t be empty. " +
                     "UserId={userId} ProjectId={projectId} Title={title} TextLength={textLength}",
                     userId, projectId, title, text.Length);
-                return null;
+                return TokenResultFactory.CreateTokenResult<IDocument>(CalculateTokenStatus.InternalError);
             }
 
             try
@@ -80,7 +97,7 @@ namespace Articler.WebApi.Services.DataSource
                 {
                     _logger.LogError("DocumentService::AddProjectTextDocumentAsync: can\'t get project. " +
                         "UserId={userId} ProjectId={projectId}", userId, projectId);
-                    return null;
+                    return TokenResultFactory.CreateTokenResult<IDocument>(CalculateTokenStatus.InternalError);
                 }
 
                 _logger.LogInformation("DocumentService::AddProjectTextDocumentAsync: got user project. " +
@@ -88,18 +105,34 @@ namespace Articler.WebApi.Services.DataSource
                     project.Id, project.Title);
 
                 var projectGrain = _clusterClient.GetGrain<IProjectGrain>(project.Id, userId);
-                var document = await projectGrain.AddTextDocument(title, text);
+                var documentTokenResult = await projectGrain.AddTextDocument(title, text);
 
+                if (documentTokenResult.Status != CalculateTokenStatus.Success)
+                {
+                    _logger.LogWarning("DocumentService::AddProjectTextDocumentAsync: calculate token status is not success. " +
+                        "UserId={userId}, ProjectId={projectId}, CalculateTokenStatus={tokenStatus}",
+                        userId, projectId, documentTokenResult.Status);
+                    return TokenResultFactory.CreateTokenResult<IDocument>(documentTokenResult.Status);
+                }
+                else if (documentTokenResult.Result == null)
+                {
+                    _logger.LogError("DocumentService::AddProjectTextDocumentAsync: calculate token status but doocument is null. " +
+                        "UserId={userId}, ProjectId={projectId}, CalculateTokenStatus={tokenStatus}",
+                        userId, projectId, documentTokenResult.Status);
+                    return TokenResultFactory.CreateTokenResult<IDocument>(CalculateTokenStatus.InternalError);
+                }
+
+                var document = documentTokenResult.Result;
                 _logger.LogInformation("DocumentService::AddProjectTextDocumentAsync: added text document. " +
                     "UserId={userId} ProjectId={projectId} DocumentId={documentId} DocumentTitle={documentTitle}",
                     userId, projectId, document.Id, document.Title);
-                return document;
+                return documentTokenResult;
             }
             catch (Exception ex)
             {
                 _logger.LogCritical("DocumentService::AddProjectTextDocumentAsync: exception raised." +
                     "UserId={userId} ProjectId={projectId} Message: {exMessage}", userId, projectId, ex.Message);
-                throw;
+                return TokenResultFactory.CreateTokenResult<IDocument>(CalculateTokenStatus.ExceptionRaised);
             }
         }
 

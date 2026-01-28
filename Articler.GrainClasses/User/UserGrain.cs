@@ -2,6 +2,8 @@
 using Articler.AppDomain.Factories.Auth;
 using Articler.AppDomain.Models.Auth;
 using Articler.AppDomain.Models.Project;
+using Articler.AppDomain.Models.Token;
+using Articler.AppDomain.Services.TokenService;
 using Articler.GrainInterfaces.Project;
 using Articler.GrainInterfaces.User;
 using Microsoft.CodeAnalysis;
@@ -14,13 +16,16 @@ namespace Articler.GrainClasses.User
         [PersistentState(OrleansConstants.UserStateName, OrleansConstants.AdoStorageProviderName)]
             IPersistentState<UserGrainState> userState,
         [PersistentState(OrleansConstants.UserProjectsStateName, OrleansConstants.AdoStorageProviderName)]
-            IPersistentState<UserProjectsGrainState> projectsState
+            IPersistentState<UserProjectsGrainState> projectsState,
+        ICalculateTokenService tokenService
         ) : Grain, IUserGrain
     {
         private readonly ILogger<UserGrain> _logger = logger;
 
         private readonly IPersistentState<UserGrainState> _userState = userState;
         private readonly IPersistentState<UserProjectsGrainState> _projectsState = projectsState;
+
+        private readonly ICalculateTokenService _tokenService = tokenService;
 
         private async Task<IUserProfile> CreateNewUser(string email, string firstName, string lastName)
         {
@@ -284,6 +289,54 @@ namespace Articler.GrainClasses.User
         public Task<int> GetUserTokens()
         {
             return Task.FromResult(_userState.State.TokenCount);
+        }
+
+        public async Task<ICalculateTokenResult> CalculateEmbeddingsTokens(string text)
+        {
+            var userId = this.GetPrimaryKeyString();
+            _logger.LogInformation("UserGrain::CalculateEmbeddingsTokens: calculate embeddings tokens. " +
+                "UserId={userId} AccountType={accountType} TokenCount={tokenCount} TextLength={textLength}",
+                userId, _userState.State.AccountType, _userState.State.TokenCount, text.Length);
+
+            var accountType = _userState.State.AccountType;
+            if (accountType == AccountType.None)
+            {
+                _logger.LogCritical("UserGrain::CalculateEmbeddingsTokens: user is unknown. UserId={userId}",
+                    userId);
+                throw new InvalidOperationException("Unknown user");
+            }
+            else if (accountType == AccountType.Free)
+            {
+                _logger.LogInformation("UserGrain::CalculateEmbeddingsTokens: account type is free.");
+                return new CalculateTokenResult
+                {
+                    Status = CalculateTokenStatus.NoTokens,
+                    MaxTokenCount = 0
+                };
+                
+            }
+            else if (accountType == AccountType.Super)
+            {
+                _logger.LogInformation("UserGrain::CalculateEmbeddingsTokens: account type is super user.");
+                return new CalculateTokenResult
+                {
+                    Status = CalculateTokenStatus.Success,
+                    MaxTokenCount = -1
+                };
+            }
+
+            var tokenCount = _tokenService.CountTokens(text);
+            _logger.LogInformation("UserGrain::CalculateEmbeddingsTokens: count token for input text. " +
+                "Textlength={textLength}, TokenCount={tokenCount}", text.Length, tokenCount);
+
+            var maxToken = _userState.State.TokenCount - tokenCount;
+            _logger.LogWarning("UserGrain::CalculateEmbeddingsTokens: count max token. " +
+                "UserId={userId}, MaxToken={maxToken}", userId, maxToken);
+            return new CalculateTokenResult
+            {
+                Status = (maxToken >= 0) ? CalculateTokenStatus.Success : CalculateTokenStatus.NotEnoughTokens,
+                MaxTokenCount = maxToken,
+            };
         }
     }
 }

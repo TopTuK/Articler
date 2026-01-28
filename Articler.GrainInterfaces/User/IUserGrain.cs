@@ -1,5 +1,6 @@
 ﻿using Articler.AppDomain.Models.Auth;
 using Articler.AppDomain.Models.Project;
+using Articler.AppDomain.Models.Token;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,5 +24,7 @@ namespace Articler.GrainInterfaces.User
 
         Task<IEnumerable<IProject>> GetProjects();
         Task<IProject?> GetProjectById(string projectId);
+
+        Task<ICalculateTokenResult> CalculateEmbeddingsTokens(string text);
     }
 }

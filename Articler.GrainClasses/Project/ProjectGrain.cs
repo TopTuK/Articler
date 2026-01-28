@@ -3,10 +3,12 @@ using Articler.AppDomain.Factories.Project;
 using Articler.AppDomain.Models.Chat;
 using Articler.AppDomain.Models.Documents;
 using Articler.AppDomain.Models.Project;
+using Articler.AppDomain.Models.Token;
 using Articler.GrainInterfaces.Chat;
 using Articler.GrainInterfaces.Document;
 using Articler.GrainInterfaces.Project;
 using Microsoft.Extensions.Logging;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Articler.GrainClasses.Project
 {
@@ -207,7 +209,7 @@ namespace Articler.GrainClasses.Project
             }
         }
 
-        public async Task<IDocument> AddTextDocument(string title, string text)
+        public async Task<ICalculateTokenResult<IDocument>> AddTextDocument(string title, string text)
         {
             var grainId = this.GetPrimaryKey(out var userId);
             _logger.LogInformation("ProjectGrain::AddTextDocument: add text data source to project. " +
@@ -220,8 +222,17 @@ namespace Articler.GrainClasses.Project
             {
                 _logger.LogInformation("ProjectGrain::AddTextDocument: call DocumentStorageGrain to store user\'s text");
                 var documentGrain = GrainFactory.GetGrain<IDocumentStorageGrain>(grainId, userId!);
-                var document = await documentGrain.AddTextDocument(title, text);
+                var tokenResult = await documentGrain.AddTextDocument(title, text);
 
+                if ((tokenResult.Status != CalculateTokenStatus.Success) || (tokenResult.Result == null))
+                {
+                    _logger.LogWarning("ProjectGrain::AddTextDocument: CalculateTokenStatus is not success. " +
+                        "GrainId={grainId}, UserId={userId} CalculateTokenStatus={tokenStatus}",
+                        grainId, userId, tokenResult.Status);
+                    return tokenResult;
+                }
+
+                var document = tokenResult.Result;
                 _logger.LogInformation("ProjectGrain::AddTextDocument: stored document to vector storage. " +
                     "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
                     grainId, userId, document.Id, document.DocumentType, document.Title);
@@ -234,7 +245,7 @@ namespace Articler.GrainClasses.Project
                 _logger.LogInformation("ProjectGrain::AddTextDocument: writed new document to state. " +
                     "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
                     grainId, userId, document.Id, document.DocumentType, document.Title);
-                return document;
+                return tokenResult;
             }
             catch (Exception ex)
             {
@@ -244,7 +255,7 @@ namespace Articler.GrainClasses.Project
             }
         }
 
-        public async Task<IDocument> AddPdfDocument(string title, string url)
+        public async Task<ICalculateTokenResult<IDocument>> AddPdfDocument(string title, string url)
         {
             var grainId = this.GetPrimaryKey(out var userId);
             _logger.LogInformation("ProjectGrain::AddPdfDocument: add text data source to project. " +
@@ -257,8 +268,17 @@ namespace Articler.GrainClasses.Project
             {
                 _logger.LogInformation("ProjectGrain::AddPdfDocument: call DocumentStorageGrain to store user\'s PDF");
                 var documentGrain = GrainFactory.GetGrain<IDocumentStorageGrain>(grainId, userId!);
-                var document = await documentGrain.AddPdfDocument(title, url);
+                var tokenResult = await documentGrain.AddPdfDocument(title, url);
 
+                if ((tokenResult.Status != CalculateTokenStatus.Success) || (tokenResult.Result == null))
+                {
+                    _logger.LogWarning("ProjectGrain::AddPdfDocument: CalculateTokenStatus is not success. " +
+                        "GrainId={grainId}, UserId={userId}, CalculateTokenStatus={tokenStatus}",
+                        grainId, userId, tokenResult.Status);
+                    return tokenResult;
+                }
+
+                var document = tokenResult.Result;
                 _logger.LogInformation("ProjectGrain::AddPdfDocument: stored document to vector storage. " +
                     "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
                     grainId, userId, document.Id, document.DocumentType, document.Title);
@@ -271,7 +291,7 @@ namespace Articler.GrainClasses.Project
                 _logger.LogInformation("ProjectGrain::AddPdfDocument: writed new document to state. " +
                     "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
                     grainId, userId, document.Id, document.DocumentType, document.Title);
-                return document;
+                return tokenResult;
             }
             catch (Exception ex)
             {
