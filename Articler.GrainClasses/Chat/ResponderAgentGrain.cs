@@ -54,7 +54,7 @@ namespace Articler.GrainClasses.Chat
                 Instructions = AGENT_INSTRUCTIONS,
                 ResponseFormat = settings.Name switch
                 {
-                    OpenAIClientSettings.OpenAIOptions => ChatResponseFormat.ForJsonSchema(
+                    ChatAgentSettings.OpenAI => ChatResponseFormat.ForJsonSchema(
                         schema: chatAgentScheme,
                         schemaName: "AgentReply",
                         schemaDescription: "Schema contains assistant reply and text of the post (text can be empty)"

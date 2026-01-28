@@ -35,6 +35,7 @@ namespace Articler.WebApi.Middlewares
             {
                 AccountType.Paid,
                 AccountType.Trial,
+                AccountType.Super,
             };
 
             if (!accountTypes.Contains(profile.AccountType))

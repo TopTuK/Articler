@@ -33,13 +33,13 @@ namespace Articler.GrainClasses.Document
         public DocumentAgentGrain(
             ILogger<DocumentAgentGrain> logger,
             IVectorStorageService storageService,
-            [FromKeyedServices("DeepSeek")] OpenAIClient openAIClient,
-            IOptionsSnapshot<OpenAIClientSettings> namedSettings)
+            [FromKeyedServices("DeepSeekChatClient")] OpenAIClient openAIClient,
+            IOptionsSnapshot<ChatAgentSettings> namedSettings)
         {
             _logger = logger;
             _storageService = storageService;
 
-            var settings = namedSettings.Get(OpenAIClientSettings.DeepSeekOptions);
+            var settings = namedSettings.Get(ChatAgentSettings.DeepSeek);
             _documentAgent = openAIClient
                 .GetChatClient(settings.ChatModel)
                 .CreateAIAgent(
