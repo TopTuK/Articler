@@ -68,6 +68,7 @@ namespace Articler.GrainClasses.Project
                 _projectState.State.Title,
                 _projectState.State.Description,
                 _projectState.State.Language,
+                _projectState.State.ProjectTokens,
                 _projectState.State.CreatedDate
             );
             _logger.LogInformation("ProjectGrain::Create: return new project. " +
@@ -90,6 +91,7 @@ namespace Articler.GrainClasses.Project
                 _projectState.State.Title,
                 _projectState.State.Description,
                 _projectState.State.Language,
+                _projectState.State.ProjectTokens,
                 _projectState.State.CreatedDate
             );
 
@@ -223,6 +225,7 @@ namespace Articler.GrainClasses.Project
                 _projectState.State.Title,
                 _projectState.State.Description,
                 _projectState.State.Language,
+                _projectState.State.ProjectTokens,
                 _projectState.State.CreatedDate
             );
             await _projectState.ClearStateAsync();

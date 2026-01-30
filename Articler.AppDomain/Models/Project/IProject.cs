@@ -14,6 +14,7 @@ namespace Articler.AppDomain.Models.Project
         string Title { get; }
         string Description { get; }
         ProjectLanguage Language { get; }
+        int Tokens { get; }
 
         DateTime CreatedDate { get; }
     }

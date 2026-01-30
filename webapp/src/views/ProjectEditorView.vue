@@ -114,7 +114,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="editor-page flex flex-col mt-16 h-full min-h-[calc(100vh-6rem)] bg-black">
+  <div class="editor-page flex flex-col mt-16 h-[calc(100vh-4rem)] min-h-0 overflow-hidden bg-black">
     <!-- Loading State -->
     <div v-if="isLoading" class="flex-1 flex items-center justify-center">
       <div class="text-center space-y-4">
@@ -171,8 +171,8 @@ onMounted(() => {
         </p>
       </div>
 
-      <!-- Editor -->
-      <div class="flex-1 min-h-0 overflow-hidden p-4">
+      <!-- Editor (fills remaining height) -->
+      <div class="editor-wrapper flex-1 min-h-0 flex flex-col overflow-hidden p-4">
         <MdEditor
           :id="editorId"
           v-model="postContent"
@@ -216,15 +216,17 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Ensure the editor takes full height */
-:deep(.md-editor) {
-  height: 100%;
+/* MdEditor fills the wrapper (wrapper has flex-1 so it gets remaining height) */
+.editor-wrapper :deep(.md-editor) {
+  height: 100% !important;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
-:deep(.md-editor-content) {
+.editor-wrapper :deep(.md-editor-content) {
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
+  overflow: auto;
 }
 </style>

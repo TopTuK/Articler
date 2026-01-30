@@ -1,5 +1,6 @@
 <script setup>
 import VLogo from '@/components/common/VLogo.vue'
+import { Coins } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
@@ -37,9 +38,19 @@ const handleLogout = async () => {
       </router-link>
 
       <div class="flex items-center gap-3">
-        <span class="text-white/80 font-medium px-3 py-1.5">
-          Tokens: {{ userStore.userTokenCount }}
-        </span>
+        <div class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800/60 border border-gray-700/50 backdrop-blur-sm">
+          <div class="flex h-8 w-8 items-center justify-center rounded-md bg-purple-500/15">
+            <Coins class="h-4 w-4 text-purple-400" />
+          </div>
+          <div class="flex flex-col items-start">
+            <span class="text-[10px] font-medium uppercase tracking-wider text-gray-400">
+              {{ t('common.tokens_label') }}
+            </span>
+            <span class="text-sm font-semibold tabular-nums text-white">
+              {{ (userStore.userTokenCount ?? 0).toLocaleString() }}
+            </span>
+          </div>
+        </div>
         <va-button 
           class="btn-variegated-secondary" 
           @click="goToProjects"

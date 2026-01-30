@@ -72,7 +72,7 @@ namespace Articler.GrainClasses.Document
 
                 var documentId = Guid.NewGuid();
                 _logger.LogInformation("DocumentStorageGrain::AddTextDocument: created id of new document. " +
-                    "GrainId={grainId} UserId={userId} DocumentId={documentId}", grainId, userId, documentId);
+                    "GrainId={grainId}, UserId={userId}, DocumentId={documentId}", grainId, userId, documentId);
                 var document = await _vectorStorageService.StoreTextAsync(userId, grainId, documentId, title, text);
 
                 _logger.LogInformation("DocumentStorageGrain::AddTextDocument: store document to vector storage. " +
@@ -83,7 +83,7 @@ namespace Articler.GrainClasses.Document
                 document = await projectGrain.AddDocument(document);
 
                 _logger.LogInformation("DocumentStorageGrain::AddTextDocument: successfully store document to vector db. " +
-                    "GrainId={grainId} UserId={userId} DocumentId={documentId} DocumentType={documentType} DocumentTitle={documentTitle}",
+                    "GrainId={grainId}, UserId={userId}, DocumentId={documentId} DocumentType={documentType} DocumentTitle={documentTitle}",
                     grainId, userId, document.Id, document.DocumentType, document.Title);
                 return CalculateTokenResultFactory<IDocument>.CreateTokenResult(calculateTokenResult.Status, document);
             }

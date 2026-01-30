@@ -12,6 +12,7 @@ const messages = {
         profile_button_title: "Profile",
         project_button_title: "Projects",
         refresh_button_title: "Refresh",
+        tokens_label: "Balance",
       },
       home: {
         app_title: "Bass Liner: explore your favorite bass tabs",
@@ -345,6 +346,7 @@ const messages = {
         profile_button_title: "Профиль",
         project_button_title: "Проекты",
         refresh_button_title: "Обновить",
+        tokens_label: "Баланс",
       },
       home: {
         app_title: "Bass Liner: исследуйте ваши любимые басовые табы",

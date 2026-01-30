@@ -28,12 +28,14 @@ namespace Articler.AppDomain.Factories.Project
             public ProjectLanguage Language { get; init; }
 
             [Id(5)]
-            public DateTime CreatedDate { get; init; }
+            public int Tokens { get; init; }
 
+            [Id(6)]
+            public DateTime CreatedDate { get; init; }
 
             public Project(Guid id, ProjectState state, 
                 string title, string description, ProjectLanguage language,
-                DateTime createdDate)
+                int tokens, DateTime createdDate)
             {
                 Id = id;
                 State = state;
@@ -42,6 +44,7 @@ namespace Articler.AppDomain.Factories.Project
                 Description = description;
                 Language = language;
 
+                Tokens = tokens;
                 CreatedDate = createdDate;
             }
         }
@@ -49,9 +52,9 @@ namespace Articler.AppDomain.Factories.Project
         public static IProject CreateProject(
             Guid id, ProjectState state,
             string title, string description, ProjectLanguage lang,
-            DateTime createdDate)
+            int tokens, DateTime createdDate)
         {
-            return new Project(id, state, title, description, lang, createdDate);
+            return new Project(id, state, title, description, lang, tokens, createdDate);
         }
     }
 }
