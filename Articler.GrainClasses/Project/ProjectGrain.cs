@@ -84,8 +84,6 @@ namespace Articler.GrainClasses.Project
             _logger.LogInformation("ProjectGrain::GetProject: start get project. " +
                 "GrainId={grainId}", grainId);
 
-            await CheckProjectState(userId);
-
             var project = ProjectFactory.CreateProject(
                 _projectState.State.ProjectId,
                 _projectState.State.ProjetState,
@@ -102,31 +100,9 @@ namespace Articler.GrainClasses.Project
             return project;
         }
 
-        private async Task CheckProjectState(string? userId)
-        {
-            if (userId == null)
-            {
-                _logger.LogError("ProjectGrain::CheckProjectState: userId is null");
-                throw new InvalidOperationException("UserId is null");
-            }
-
-            if (_projectState.State.Status == ProjectGrainStatus.Unknown)
-            {
-                _logger.LogError("ProjectGrain::CheckProjectState: project state is invalid. " +
-                    "State={projectState}", _projectState.State.Status);
-
-                await _projectState.ClearStateAsync();
-                await _projectTextState.ClearStateAsync();
-
-                throw new InvalidOperationException("Project is not created");
-            }
-        }
-
         public async Task<IProjectText> GetProjectText()
         {
             var grainId = this.GetPrimaryKey(out var userId);
-
-            await CheckProjectState(userId);
 
             var text = _projectTextState.State.Text;
             _logger.LogInformation("ProjectGrain::GetProjectText: return project text. " +
@@ -138,8 +114,6 @@ namespace Articler.GrainClasses.Project
         public async Task<IProjectText> SetProjectText(string text)
         {
             var grainId = this.GetPrimaryKey(out var userId);
-
-            await CheckProjectState(userId);
 
             var currentText = _projectTextState.State.Text;
             _projectTextState.State.Text = text;
@@ -155,16 +129,44 @@ namespace Articler.GrainClasses.Project
         {
             var grainId = this.GetPrimaryKey(out var userId);
             _logger.LogInformation("ProjectGrain::GetDocuments: start get documents. " +
-                "GrainId={grainId}, UserId={userId}",
-                grainId, userId);
-
-            await CheckProjectState(userId);
+                "GrainId={grainId}, UserId={userId}", grainId, userId);
 
             var documents = _projectDocumentState.State.Documents;
+
             _logger.LogInformation("ProjectGrain::GetDocuments: return project documents. " +
                 "GrainId={grainId}, UserId={userId}, DocumentCount={documentCount}",
                 grainId, userId, documents.Count);
             return documents;
+        }
+
+        public async Task<IDocument?> GetDocumentById(string documentId)
+        {
+            var grainId = this.GetPrimaryKey(out var userId);
+            _logger.LogInformation("ProjectGrain::GetDocumentById: start get document by id. " +
+                "GrainId={grainId}, UserId={userId}, DocumentId={documentId}", grainId, userId, documentId);
+
+            if (Guid.TryParse(documentId, out var docId))
+            {
+                var document = _projectDocumentState.State
+                    .Documents
+                    .FirstOrDefault(doc => doc.Id == docId);
+
+                if (document == null)
+                {
+                    _logger.LogWarning("ProjectGrain::GetDocumentById: project document is not found. " +
+                        "GrainId={grainId}, UserId={userId}, DocumentId={documentId}", grainId, userId, documentId);
+                    return null;
+                }
+
+                _logger.LogInformation("ProjectGrain::GetDocumentById: return document by id. " +
+                    "GrainId={grainId}, UserId={userId}, DocumentId={documentId}, DocumentTitle={documentTitle}",
+                    grainId, userId, document.Id, document.Title);
+                return document;
+            }
+
+            _logger.LogError("ProjectGrain::GetDocumentById: can\'t parse document id as GUID. " +
+                "GrainId={grainId}, UserId={userId}, DocumentId={documentId}", grainId, userId, documentId);
+            return null;
         }
 
         public async Task<IDocument?> RemoveDocument(Guid documentId)
@@ -174,131 +176,13 @@ namespace Articler.GrainClasses.Project
                 "GrainId={grainId}, UserId={userId}, DocumentId={documentId}",
                 grainId, userId, documentId);
 
-            await CheckProjectState(userId);
-
             var document = _projectDocumentState.State
                 .Documents
                 .FirstOrDefault(d => d.Id == documentId);
-            if (document == null)
-            {
-                _logger.LogError("ProjectGrain::RemoveDocument: can\'t find project document. " +
-                    "GrainId={grainId}, UserId={userId}, DocumentId={documentId}",
-                    grainId, userId, documentId);
-                return null;
-            }
-
-            try
-            {
-                var documentGrain = GrainFactory.GetGrain<IDocumentStorageGrain>(grainId, userId!);
-                var removedDocument = await documentGrain.RemoveDocument(document);
-
-                _projectDocumentState.State.Documents.Remove(document);
-                await _projectDocumentState.WriteStateAsync();
-
-                _logger.LogInformation("ProjectGrain::RemoveDocument: successfully removed document. " +
-                    "GrainId={grainId}, UserId={userId}, DocumentId={documentId} DocumentTitle={documentTitle}",
-                    grainId, userId, removedDocument.Id, removedDocument.Title);
-                return removedDocument;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogCritical("ProjectGrain::RemoveDocument: exception raised. " +
-                    "GrainId={grainId}, UserId={userId}, DocumentId={documentId} Message: {exMessage}",
-                    grainId, userId, documentId, ex.Message);
-                throw;
-            }
-        }
-
-        public async Task<ICalculateTokenResult<IDocument>> AddTextDocument(string title, string text)
-        {
-            var grainId = this.GetPrimaryKey(out var userId);
-            _logger.LogInformation("ProjectGrain::AddTextDocument: add text data source to project. " +
-                "GrainId={grainId}, UserId={userId} Title={title} TextLength={textLength}",
-                grainId, userId, title, text.Length);
-
-            await CheckProjectState(userId);
-
-            try
-            {
-                _logger.LogInformation("ProjectGrain::AddTextDocument: call DocumentStorageGrain to store user\'s text");
-                var documentGrain = GrainFactory.GetGrain<IDocumentStorageGrain>(grainId, userId!);
-                var tokenResult = await documentGrain.AddTextDocument(title, text);
-
-                if ((tokenResult.Status != CalculateTokenStatus.Success) || (tokenResult.Result == null))
-                {
-                    _logger.LogWarning("ProjectGrain::AddTextDocument: CalculateTokenStatus is not success. " +
-                        "GrainId={grainId}, UserId={userId} CalculateTokenStatus={tokenStatus}",
-                        grainId, userId, tokenResult.Status);
-                    return tokenResult;
-                }
-
-                var document = tokenResult.Result;
-                _logger.LogInformation("ProjectGrain::AddTextDocument: stored document to vector storage. " +
-                    "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
-                    grainId, userId, document.Id, document.DocumentType, document.Title);
-                _projectDocumentState
-                    .State
-                    .Documents
-                    .Add(document);
-                await _projectDocumentState.WriteStateAsync();
-
-                _logger.LogInformation("ProjectGrain::AddTextDocument: writed new document to state. " +
-                    "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
-                    grainId, userId, document.Id, document.DocumentType, document.Title);
-                return tokenResult;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogCritical("ProjectGrain::AddTextDocument: exception raised. " +
-                    "GrainId={grainId} UserId={userId}. Message: {exMsg}", grainId, userId, ex.Message);
-                throw;
-            }
-        }
-
-        public async Task<ICalculateTokenResult<IDocument>> AddPdfDocument(string title, string url)
-        {
-            var grainId = this.GetPrimaryKey(out var userId);
-            _logger.LogInformation("ProjectGrain::AddPdfDocument: add text data source to project. " +
-                "GrainId={grainId}, UserId={userId} Title={title} Url={pdfUrl}",
-                grainId, userId, title, url);
-
-            await CheckProjectState(userId);
-
-            try
-            {
-                _logger.LogInformation("ProjectGrain::AddPdfDocument: call DocumentStorageGrain to store user\'s PDF");
-                var documentGrain = GrainFactory.GetGrain<IDocumentStorageGrain>(grainId, userId!);
-                var tokenResult = await documentGrain.AddPdfDocument(title, url);
-
-                if ((tokenResult.Status != CalculateTokenStatus.Success) || (tokenResult.Result == null))
-                {
-                    _logger.LogWarning("ProjectGrain::AddPdfDocument: CalculateTokenStatus is not success. " +
-                        "GrainId={grainId}, UserId={userId}, CalculateTokenStatus={tokenStatus}",
-                        grainId, userId, tokenResult.Status);
-                    return tokenResult;
-                }
-
-                var document = tokenResult.Result;
-                _logger.LogInformation("ProjectGrain::AddPdfDocument: stored document to vector storage. " +
-                    "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
-                    grainId, userId, document.Id, document.DocumentType, document.Title);
-                _projectDocumentState
-                    .State
-                    .Documents
-                    .Add(document);
-                await _projectDocumentState.WriteStateAsync();
-
-                _logger.LogInformation("ProjectGrain::AddPdfDocument: writed new document to state. " +
-                    "GrainId={grainId}, UserId={userId} DocumentId={documentId}, DocumentType={documentType}, DocumentTitle={documentTitle}",
-                    grainId, userId, document.Id, document.DocumentType, document.Title);
-                return tokenResult;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogCritical("ProjectGrain::AddPdfDocument: exception raised. " +
-                    "GrainId={grainId} UserId={userId}. Message: {exMsg}", grainId, userId, ex.Message);
-                throw;
-            }
+            _logger.LogInformation("ProjectGrain::RemoveDocument: removed document. " +
+                "GrainId={grainId}, UserId={userId}, DocumentId={documentId}",
+                grainId, userId, document?.Id);
+            return document;
         }
 
         public async Task<IProject> Remove()
@@ -307,16 +191,14 @@ namespace Articler.GrainClasses.Project
             _logger.LogInformation("ProjectGrain::RemoveProject: start removing project. " +
                 "Grainid={grainId} ProjectId={userId}", grainId, userId);
 
-            await CheckProjectState(userId);
-
             // Remove project documents
             var documents = _projectDocumentState.State.Documents;
             if (documents.Any())
             {
-                var documentGrain = GrainFactory.GetGrain<IDocumentStorageGrain>(grainId, userId!);
+                var documentStorageGrain = GrainFactory.GetGrain<IDocumentStorageGrain>(grainId, userId!);
                 foreach (var document in documents)
                 {
-                    var removedDocument = await documentGrain.RemoveDocument(document);
+                    var removedDocument = await documentStorageGrain.RemoveDocumentFromStorage(document);
                     _logger.LogInformation("ProjectGrain::RemoveProject: removed document. " +
                         "DocumentId={documentId} DocumentTitle={documentTitle}",
                         document.Id, document.Title);
@@ -332,7 +214,7 @@ namespace Articler.GrainClasses.Project
             _logger.LogInformation("ProjectGrain::RemoveProject: removing project text state. " +
                 "Grainid={grainId} ProjectId={userId}", grainId, userId);
             await _projectTextState.ClearStateAsync();
-            
+
             _logger.LogInformation("ProjectGrain::RemoveProject: removing project state. " +
                 "Grainid={grainId} ProjectId={userId}", grainId, userId);
             var project = ProjectFactory.CreateProject(
@@ -346,6 +228,24 @@ namespace Articler.GrainClasses.Project
             await _projectState.ClearStateAsync();
 
             return project;
+        }
+
+        public async Task<IDocument> AddDocument(IDocument document)
+        {
+            var grainId = this.GetPrimaryKey(out var userId);
+            _logger.LogInformation("ProjectGrain::AddDocument: start add document to project. " +
+                "GrainId={grainId}, UserId={userId}, DocumentId={documentId}, DocumentTitle={documentTitle}",
+                grainId, userId, document.Id, document.Title);
+
+            _projectDocumentState.State
+                .Documents
+                .Add(document);
+            await _projectDocumentState.WriteStateAsync();
+
+            _logger.LogInformation("ProjectGrain::AddDocument: end add document to project. " +
+                "GrainId={grainId}, UserId={userId}, DocumentId={documentId}, DocumentTitle={documentTitle}",
+                grainId, userId, document.Id, document.Title);
+            return document;
         }
     }
 }

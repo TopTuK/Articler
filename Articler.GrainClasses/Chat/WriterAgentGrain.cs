@@ -53,7 +53,7 @@ namespace Articler.GrainClasses.Chat
             _agentChatState = agentHistoryState;
 
             var settings = namedSettings.Get(ChatAgentSettings.DeepSeek);
-            var chatAgentScheme = AIJsonUtilities.CreateJsonSchema(typeof(AIChatAgentResponseFormat));
+            var chatAgentScheme = AIJsonUtilities.CreateJsonSchema(typeof(WriterAgentResponseFormat));
             var chatOptions = new ChatOptions
             {
                 Instructions = WRITER_AGENT_INSTRUCTIONS,
@@ -205,7 +205,7 @@ namespace Articler.GrainClasses.Chat
                 _agentChatState.State.MessageHistory = history;
                 await _agentChatState.WriteStateAsync();
 
-                if (chatResult.TryDeserialize<AIChatAgentResponseFormat>(out var response))
+                if (chatResult.TryDeserialize<WriterAgentResponseFormat>(out var response))
                 {
                     _logger.LogInformation("WriterAgentGrain::SendMessage: deserealized chat response to JSON. " +
                         "GrainId={grainId} UserId={userId} AssistantText={assistantText} PostTextLength={postLength}",

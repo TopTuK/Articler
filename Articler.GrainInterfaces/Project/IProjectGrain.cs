@@ -20,8 +20,8 @@ namespace Articler.GrainInterfaces.Project
         Task<IProjectText> SetProjectText(string text);
 
         Task<IEnumerable<IDocument>> GetDocuments();
+        Task<IDocument?> GetDocumentById(string documentId);
+        Task<IDocument> AddDocument(IDocument document);
         Task<IDocument?> RemoveDocument(Guid documentId);
-        Task<ICalculateTokenResult<IDocument>> AddTextDocument(string title, string text);
-        Task<ICalculateTokenResult<IDocument>> AddPdfDocument(string title, string url);
     }
 }

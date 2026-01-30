@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace Articler.GrainClasses.Chat
 {
-    public class AIChatAgentResponseFormat
+    public class ResponderAgentResponseFormat
     {
-        public string? AgentReply { get; set; }
-        public string? PostText { get; set; }
+        public string AgentAnswer { get; set; } = string.Empty;
     }
 }

@@ -10,8 +10,21 @@ namespace Articler.GrainInterfaces.Document
 {
     public interface IDocumentStorageGrain : IGrainWithGuidCompoundKey
     {
+        [ResponseTimeout("00:10:00")]
         Task<ICalculateTokenResult<IDocument>> AddTextDocument(string title, string text);
+        
+        [ResponseTimeout("00:10:00")]
         Task<ICalculateTokenResult<IDocument>> AddPdfDocument(string title, string url);
-        Task<IDocument> RemoveDocument(IDocument document);
+        
+        //[ResponseTimeout("00:10:00")]
+        //Task<IDocument> RemoveDocument(IDocument document);
+
+        [ResponseTimeout("00:10:00")]
+        Task<IDocument?> RemoveDocument(string documentId);
+
+        [ResponseTimeout("00:10:00")]
+        Task<IDocument?> RemoveDocumentFromStorage(IDocument document);
+
+        Task<IEnumerable<IDocument>> GetDocuments();
     }
 }

@@ -25,7 +25,7 @@ namespace Articler.GrainClasses.Chat
         RESPONSE RULES:
         - Never answer questions that are not related to the topic of the post.
         - Use SearchDocuments tool if the request relates to user documents or you need specific context.
-        - Responses MUST BE in JSON format, contains 2 fields: "AgentReply" field there should be your answer and "PostText" field which should be empty string.
+        - Responses MUST BE in JSON format, contains 1 field "AgentAnswer" there should be your answer to question.
         
         LANGUAGE RULES: 
         - You MUST ALWAYS answer in the SAME language as the user's question.
@@ -48,7 +48,7 @@ namespace Articler.GrainClasses.Chat
             _agentHistoryState = agentHistoryState;
 
             var settings = namedSettings.Get(ChatAgentSettings.DeepSeek);
-            var chatAgentScheme = AIJsonUtilities.CreateJsonSchema(typeof(AIChatAgentResponseFormat));
+            var chatAgentScheme = AIJsonUtilities.CreateJsonSchema(typeof(ResponderAgentResponseFormat));
             var chatOptions = new ChatOptions
             {
                 Instructions = AGENT_INSTRUCTIONS,
@@ -57,7 +57,7 @@ namespace Articler.GrainClasses.Chat
                     ChatAgentSettings.OpenAI => ChatResponseFormat.ForJsonSchema(
                         schema: chatAgentScheme,
                         schemaName: "AgentReply",
-                        schemaDescription: "Schema contains assistant reply and text of the post (text can be empty)"
+                        schemaDescription: "Schema contains assistant response for a question"
                     ),
                     _ => ChatResponseFormat.Json,
                 }
@@ -206,15 +206,15 @@ namespace Articler.GrainClasses.Chat
                 _agentHistoryState.State.MessageHistory = history;
                 await _agentHistoryState.WriteStateAsync();
 
-                if (chatResult.TryDeserialize<AIChatAgentResponseFormat>(out var response))
+                if (chatResult.TryDeserialize<ResponderAgentResponseFormat>(out var response))
                 {
                     _logger.LogInformation("ResponderAgentGrain::SendMessage: deserealized chat response to JSON. " +
                         "GrainId={grainId} UserId={userId} AssistantText={assistantText} PostTextLength={postLength}",
-                        grainId, userId, response.AgentReply, response.PostText?.Length);
+                        grainId, userId, response.AgentAnswer, projectText.Text);
                     return ChatMessageFactory.CreateMessageResponse(
                         AppDomain.Models.Chat.ChatRole.Assistant,
-                        response.AgentReply ?? "Unknown response",
-                        response.PostText ?? string.Empty);
+                        message: response.AgentAnswer ?? "Unknown response",
+                        text: projectText.Text);
                 }
                 else
                 {
