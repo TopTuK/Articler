@@ -1,11 +1,11 @@
-﻿using Articler.AppDomain.Models.Token;
+﻿using Orleans;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Articler.GrainClasses.Token
+namespace Articler.AppDomain.Models.Token
 {
     [GenerateSerializer]
     public class CalculateTokenResult<TResult> : ICalculateTokenResult<TResult>

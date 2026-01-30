@@ -1,8 +1,8 @@
-﻿using Articler.AppDomain.Models.Documents;
+﻿using Articler.AppDomain.Factories.Token;
+using Articler.AppDomain.Models.Documents;
 using Articler.AppDomain.Models.Token;
 using Articler.AppDomain.Services.Document;
 using Articler.AppDomain.Services.VectorStorage;
-using Articler.GrainClasses.Token;
 using Articler.GrainInterfaces.Document;
 using Articler.GrainInterfaces.Project;
 using Articler.GrainInterfaces.User;

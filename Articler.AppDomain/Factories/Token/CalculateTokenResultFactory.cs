@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Articler.GrainClasses.Token
+namespace Articler.AppDomain.Factories.Token
 {
-    internal static class CalculateTokenResultFactory<TResult>
+    public static class CalculateTokenResultFactory<TResult>
     {
         public static ICalculateTokenResult<TResult> CreateTokenResult(CalculateTokenStatus status, TResult? result = default)
         {

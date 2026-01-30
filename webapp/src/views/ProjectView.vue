@@ -287,6 +287,7 @@ const confirmDeleteProject = async () => {
         <!-- Right Column - Post Editor -->
         <PostEditor
           v-model="postContent"
+          :project-id="project.id"
           :is-loading-text="isLoadingText"
           :text-error="textError"
           :is-saving="isSavingText"

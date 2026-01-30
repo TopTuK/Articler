@@ -8,6 +8,7 @@ const LoginView = () => import('@/views/LoginView.vue')
 const ProjectListView = () => import('@/views/ProjectListView.vue')
 const NewProjectView = () => import('@/views/NewProjectView.vue')
 const ProjectView = () => import('@/views/ProjectView.vue')
+const ProjectEditorView = () => import('@/views/ProjectEditorView.vue')
 const ProfileView = () => import('@/views/ProfileView.vue')
 
 const routes = [
@@ -57,6 +58,15 @@ const routes = [
         component: ProjectView,
         meta: {
             title: "project_view_title",
+            requireAuth: true,
+        },
+    },
+    {
+        path: "/projects/:id/editor",
+        name: "ProjectEditor",
+        component: ProjectEditorView,
+        meta: {
+            title: "project_editor.view_title",
             requireAuth: true,
         },
     },

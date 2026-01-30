@@ -1,11 +1,13 @@
 <script setup>
-import { ref } from 'vue'
-import { FileText, RefreshCw, Maximize2 } from 'lucide-vue-next'
+import { FileText, RefreshCw, ExternalLink } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import PostEditorModal from './PostEditorModal.vue'
 
 const props = defineProps({
   modelValue: {
+    type: String,
+    default: '',
+  },
+  projectId: {
     type: String,
     default: '',
   },
@@ -27,8 +29,6 @@ const emit = defineEmits(['update:modelValue', 'save', 'refresh'])
 
 const { t } = useI18n()
 
-const showModal = ref(false)
-
 const handleSavePost = () => {
   if (!props.modelValue.trim()) return
   emit('save')
@@ -36,20 +36,6 @@ const handleSavePost = () => {
 
 const handleRefresh = () => {
   emit('refresh')
-}
-
-const handleOpenModal = () => {
-  showModal.value = true
-}
-
-const handleModalSave = (text) => {
-  emit('update:modelValue', text)
-  emit('save')
-  showModal.value = false
-}
-
-const handleModalClose = () => {
-  showModal.value = false
 }
 </script>
 
@@ -63,15 +49,14 @@ const handleModalClose = () => {
             {{ t('project_view.sections.post_content') }}
           </h2>
           <div class="flex items-center gap-2">
-            <button
-              type="button"
-              @click="handleOpenModal"
-              :disabled="isLoadingText"
+            <router-link
+              v-if="projectId"
+              :to="{ name: 'ProjectEditor', params: { id: projectId } }"
               class="inline-flex items-center justify-center gap-2 rounded-md border border-gray-700 bg-gray-800/50 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 disabled:pointer-events-none disabled:opacity-50"
-              :title="t('project_view.actions.open_in_modal')"
+              :title="t('project_editor.actions.open_editor_page')"
             >
-              <Maximize2 :size="16" />
-            </button>
+              <ExternalLink :size="16" />
+            </router-link>
             <button
               type="button"
               @click="handleRefresh"
@@ -127,15 +112,6 @@ const handleModalClose = () => {
         </div>
       </div>
     </div>
-
-    <!-- Post Editor Modal -->
-    <PostEditorModal
-      v-model="showModal"
-      :post-text="modelValue"
-      :is-saving="isSaving"
-      @save="handleModalSave"
-      @close="handleModalClose"
-    />
   </div>
 </template>
 

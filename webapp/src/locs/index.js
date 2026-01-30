@@ -161,6 +161,13 @@ const messages = {
           refresh_history: "Refresh chat history",
         },
       },
+      project_editor: {
+        view_title: "Post Editor",
+        actions: {
+          back_to_project: "Back to project",
+          open_editor_page: "Open in full editor",
+        },
+      },
       project_card: {
         status: {
           draft: "Draft",
@@ -485,6 +492,13 @@ const messages = {
           processing: "Обработка вашего сообщения...",
           error_message: "Извините, произошла ошибка при обработке вашего сообщения.",
           refresh_history: "Обновить историю чата",
+        },
+      },
+      project_editor: {
+        view_title: "Редактор поста",
+        actions: {
+          back_to_project: "Вернуться к проекту",
+          open_editor_page: "Открыть в полном редакторе",
         },
       },
       project_card: {
